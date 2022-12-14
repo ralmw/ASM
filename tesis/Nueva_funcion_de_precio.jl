@@ -1,6 +1,8 @@
 # En este documento trabajeré sobre la función para determinar el precio entre un par de agentes
 
 using PlotlyJS
+using Roots
+
 
 # Paso número 1. Graficar la variedad de un agente.
 # un agente debe tener los siguientes atributos:
@@ -39,7 +41,7 @@ A = Agent(Riqueza(100,10),Prediccion(15,1),12,1)
 
 #Decision Manifold
 function DM(x,P,Agente::Agent)
-    Δw = Agente.Riqueza.E - P*x + Agente.Pred.P*(Agente.Riqueza.S + x)
+    Δw = Agente.Riqueza.E - P*x + Agente.Precio_pasado + (Agente.Pred.P - Agente.Precio_pasado )*(Agente.Riqueza.S + x)
     a = Agente.Riqueza.E / Agente.Precio_pasado + Agente.Riqueza.S 
     b = Agente.Pred.P / Agente.Pred.σ 
     K = exp(Agente.λ * (x^2/a^2 + P^2/b^2))
@@ -184,4 +186,185 @@ Plot_two_DM(A,B)
 # Queda entonces encontrar el máximo. Quiero resolver simultaeamente el problema
 # de la intersección y el del máximo. Pero comencemos por el de la intersección.
 
-DM(x,P,A) - DM(-x,P,B) == 0 sii x,P son puntos de intersección.
+# DM(x,P,A) - DM(-x,P,B) == 0 sii x,P son puntos de intersección.
+
+# Tengo que ver cómo se ve la resta de ambas variedades, finalmente lo que 
+# buscaré serán los ceros de la resta para encontrar la intersección, entonces
+# primero quiero verla
+
+function Plot_subtraction_DM(Agente1::Agent, Agente2::Agent)
+    a1 = abs( Agente1.Riqueza.E / Agente1.Precio_pasado + Agente1.Riqueza.S )
+    b1 = abs( Agente1.Pred.P / Agente1.Pred.σ )
+
+    a2 = abs( Agente2.Riqueza.E / Agente2.Precio_pasado + Agente2.Riqueza.S )
+    b2 = abs( Agente2.Pred.P / Agente2.Pred.σ )
+
+    a = max(a1,a2)
+    b = max(b1,b2)
+    λ = min(Agente1.λ,Agente2.λ)
+
+    x_range = -a/sqrt(λ)*1.5:(a/sqrt(λ)*1.5*2/500):a/sqrt(λ)*1.5
+    y_range = -b/sqrt(λ)*1.5:(b/sqrt(λ)*1.5*2/500):b/sqrt(λ)*1.5
+
+    x = collect(x_range)
+    y = collect(y_range)
+    z = zeros(length(x),length(y))
+    z0 = zeros(length(x),length(y))
+    #z1 = zeros(length(x),length(y))
+    #z2 = zeros(length(x),length(y))
+
+    # La variedad de ambos agentes
+    i = 1
+    j = 1
+    for a in x_range
+        j = 1
+        for b in y_range
+            #z1[i,j] = DM(a,b,Agente1)
+            #z2[i,j] = DM(-a,b,Agente2)
+            z[i,j] = DM(a,b,Agente1) - DM(-a,b,Agente2)
+            j += 1
+        end 
+        i += 1
+    end 
+
+    layout = Layout(
+        title="Variedades de decisión de los agentes",
+        autosize=true,
+        width=1000,
+        height=800,
+        margin=attr(l=65, r=50, b=65, t=90)
+    )
+
+    trace1 = surface(z = z, x=x, y=y, colorscale="Electric",showscale=false)
+    trace2 = surface(z = z0, x=x, y=y, colorscale="Viridis")
+
+    PlotlyJS.plot([trace1,trace2], layout)
+    
+end
+
+Plot_subtraction_DM(A,B)
+
+# Veamos un ejemplo de cómo usar Roots:
+
+f(x) = exp(x) - x^4;
+
+α₀,α₁,α₂ = -0.8155534188089607, 1.4296118247255556, 8.6131694564414;
+
+find_zero(f, (8,9), Bisection()) ≈ α₂ # a bisection method has the bracket specified
+
+
+find_zero(f, (-10, 0)) ≈ α₀ # Bisection is default if x in `find_zero(f,x)` is not a number
+
+
+
+find_zero(f, (-10, 0), Roots.A42()) ≈ α₀ # fewer fun
+
+find_zero(f, (-10,9))
+
+
+# funciona y funciona bonito, así que vamos a probarlo con mi función.
+# Mi función a la que le quiero encontrar el cero es la siguiente:
+DM(a,b,Agente1) - DM(-a,b,Agente2)
+# Dónde a, Agente1 y Agente2 son constantes. Necesito una manera de escribir eso y que la máquina entienda qué debe de llenar
+b = 10
+f(x) = DM(x,b,A) - DM(-x,b,B)
+
+find_zero(f,(-100,100))
+
+DM(-77.87,b,A)
+
+# Ya tengo un cero para un valor de b, ahora quiero obtener el cero para el cual el valor
+# se maximizar. Para ello, cómo no tengo certeza alguna de dónde pueda estar el máximo 
+# lo que haré será tomarme una partición del intervalo y en todos esos puntos
+# encontrar el cero, y también evaluar la variedad de alguno de los agentes para tomarme
+# esa información cómo semilla para buscar el máximo.
+
+function Calculate_ranges(Agente1::Agent, Agente2::Agent)
+    a1 = abs( Agente1.Riqueza.E / Agente1.Precio_pasado + Agente1.Riqueza.S )
+    b1 = abs( Agente1.Pred.P / Agente1.Pred.σ )
+
+    a2 = abs( Agente2.Riqueza.E / Agente2.Precio_pasado + Agente2.Riqueza.S )
+    b2 = abs( Agente2.Pred.P / Agente2.Pred.σ )
+
+    a = max(a1,a2)
+    b = max(b1,b2)
+    λ = min(Agente1.λ,Agente2.λ)
+
+    intervalo = a/sqrt(λ)*1.5
+
+    y_range = -b/sqrt(λ)*1.5:(b/sqrt(λ)*1.5*2/500):b/sqrt(λ)*1.5
+    y = collect(y_range)
+    
+    return intervalo, y
+end
+
+intervalo, Y = Calculate_ranges(A,B)
+intervalo
+Y[1]
+Y[end]
+
+# Para cada elemento de Y calculamos el cero y evaluamos la función de tal manera que 
+# obtendremos otro vector lleno de valores de X y de la evaluación.
+
+function Find_zero_DM(y,A,B,intervalo)
+    f(x) = DM(x,y,A) - DM(-x,y,B)
+    return find_zero(f,(-intervalo,intervalo))
+end
+
+Find_zero_DM(33,A,B,500)
+
+function Calculate_solution_set(A::Agent,B::Agent)
+    intervalo, Y = Calculate_ranges(A,B)
+    X = zeros(length(Y))
+    Z = zeros(length(Y))
+    for (i,y) ∈ enumerate(Y)
+        x = intervalo
+        try 
+            x = Find_zero_DM(y,A,B,intervalo)
+        catch e
+            
+        end
+        X[i] = x 
+        Z[i] = DM(x,y,A)
+    end
+    return X, Z 
+end
+
+
+
+X,Z = Calculate_solution_set(A,B)
+
+maximum(Z)
+argmax(Z)
+
+# Ahora que ya tengo 
+
+using Plots
+
+Plot(X,Z)
+
+Plot(X)
+Plot(Y)
+Plot(Z)
+
+# Esto propone que siempre tendremos un par de soluciones gemelas, lo cuál sería interesante
+# de demostrar y de entender. Pero tendría entonces que decidirme por alguno de los 
+# dos máximos 
+# Comencemos por observar algunos otros casos:
+precio_pasado =1000
+A = Agent(Riqueza(50,10),Prediccion(50,1),precio_pasado,0.1)
+B = Agent(Riqueza(20,10),Prediccion(50,1),precio_pasado,0.1)
+
+
+Plot_two_DM(A,B)
+
+Plot_subtraction_DM(A,B)
+
+X,Z = Calculate_solution_set(A,B)
+
+maximum(Z)
+argmax(Z)
+
+Plot(X,Z)
+Plot(X,Y)
+Plot(Y,Z)
