@@ -17,4 +17,4 @@ des.des
 predict( reglas,des.des)
 
 des = initializeDescriptor(properties)
-des = updateDescriptor(10000,des)
+des = updateDescriptor!(10000,des)

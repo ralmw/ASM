@@ -22,27 +22,30 @@ plot(mdf.getPrice[1:10])
 
 
 
-plot(mdf.getPrice, ylims=(0,1000))
+agentts = allagents(model)
 
-f
-n=1
-mdf.getInfo[n]
-avePred(mdf.getInfo[n])[1]
+agente = getindex(model,1)
+agente.GA_time
+predict(agente.reglas,model.properties.des.des)
 
+model.des
 
-aggs  = collect(allagents(model))
-
-[mean([aggs[j].reglas[i].predictor[1] for i in 1:100]) for j in 1:100]
+model.properties.des.des
 
 
 
 
-exp(0.5)
+keys(model.properties)
 
-using Plots, StatsPlots
+properties[:vars]
 
-sum(3)
-mean
+model.properties.vars
+
+
+
+
+
+
 
 Ahora quiero ver cómo se comportan las series de tiempo.
 

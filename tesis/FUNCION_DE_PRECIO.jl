@@ -1,4 +1,6 @@
-# Una función más 
+# función de precio con la normita que me inventé y no funcionó.
+# No por la normita pero porque la función no era sensible al 
+# fenómeno de subidas y bajas del precio 
 
 using PlotlyJS  
 using Roots 
