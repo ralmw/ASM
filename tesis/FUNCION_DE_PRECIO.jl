@@ -2,6 +2,10 @@
 # No por la normita pero porque la función no era sensible al 
 # fenómeno de subidas y bajas del precio 
 
+# pero sobre el mismo código escribí mi última versión de mi función de precio 
+# esta es la que tengo propuesta para usar en las operaciones entre pares, 
+# sin embargo sigue lejos de ser perfecta :()
+
 using PlotlyJS  
 using Roots 
 
