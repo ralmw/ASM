@@ -1,5 +1,7 @@
 # En este documento trabajeré sobre la función para determinar el precio entre un par de agentes
 
+# Mi primera función de precio propuesta, bien complicada y bonita pero igualmente inservible 
+
 using PlotlyJS
 using Roots
 

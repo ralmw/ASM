@@ -34,12 +34,38 @@ function calcTransaction(agente1::Trader,agente2::Trader)
     a2,b2 = predict(agente2.reglas,model.properties.des.des)
 
     Pt = model.properties.des.precios[end] # último precio 
-    Df = model.properties.des.des[end] # último dividendo
+    # minúscula precio anterior 
+    # mayúscula precio actual en la transacción
+    Dt = model.properties.des.des[end] # último dividendo
 
     P1 = a1*(Pt + Dt) + b1 
     P2 = a2*(Pt + Dt) + b2 
 
     # Y ahora toca tomar el precio de acuerdo con el criterio seleccionado, ya sea 
     # justo a la mitad a proporcional a la riqueza de los agentes.
-    
+
+    if agente1.properties[:priceCompromise] == "middle"
+        PT = (P1 + P2)/2
+    elseif agente1.properties[:priceCompromise] == "proportional"
+        m1 = (agente1.wealth[1]^2 + agente1.wealth[2]^2)^(1/2)
+        m2 = (agente2.wealth[1]^2 + agente2.wealth[2]^2)^(1/2)
+
+        if P1 >= P2
+            m = m2 
+        else 
+            m = m1 # m es la norma correspondiente al agente de Pt mas bajo
+        end  
+        Pt2 = max(P1,P2)
+        Pt1 = min(P1,P2) # Para tener los precios ordenados 
+
+        PT = (Pt2 - Pt1)*(m/(m1+m2)) + Pt1
+        # PT es el precio acordado en la transacción actual
+    end
+
+    # Ahora encontremos x óptimo para ese precio
+
+
+
+
+
 end

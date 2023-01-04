@@ -3,6 +3,9 @@
 # para luego graficarlo cómo una sábada 3-dimensional 
 
 
+# Esta es la función de precio del artículo y modelo originales
+
+
 using PlotlyJS
 
 # con este método solamente tengo que hacer una bonita función p que dados 

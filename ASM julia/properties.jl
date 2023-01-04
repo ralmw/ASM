@@ -1,10 +1,10 @@
 # en este documento se crea el diccionario properties
 # que se utiliza a lo largo de todo el código
 
-mi idea es crear dos diccionarios. uno primero donde la
-persona ejecutando el código pondrá los parámetros que quiera
-variar y otro en donde se agregen todos los parámetros que
-hagan falta para que los parámetros puestos por el usuario funcionen
+#mi idea es crear dos diccionarios. uno primero donde la
+#persona ejecutando el código pondrá los parámetros que quiera
+#variar y otro en donde se agregen todos los parámetros que
+#hagan falta para que los parámetros puestos por el usuario funcionen
 
 # Para seleccionar el descriptor deseado se debe modificar el valor
 # de la entrada :descriptor del diccionario properties
@@ -19,7 +19,17 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     :interestRate => 0.001, :dividendMean => 1000,
     :descriptor => 3,
     :riskAversion => 0.001, :gaActivationFrec => 350,
-    :initStock => 1.0, :iniPrecio => 100 )
+    :initStock => 1.0, :iniPrecio => 100,
+    :priceCompromise => "middle" )
+
+# Valores para priceCompromise: "middle", "proportional"
+# cuando se selecciona "middle" se selecciona el precio que este 
+# justo a la mitad de las predicciones de ambos agentes 
+# si se selecciona "proportional" se selecciona un precio 
+# de manera proporcional a la riqueza de los agentes. 
+# mando con la norma euclidiana a la riqueza de los agentes, a1,a2 
+# para luego dividir el intervalo entre precios en a1+a2 se seleccionar el 
+# precio que beneficie al más rico  
 
 properties[:descriptor]
 
