@@ -47,17 +47,17 @@ model.properties.vars
 
 
 
-Ahora quiero ver cómo se comportan las series de tiempo.
+#Ahora quiero ver cómo se comportan las series de tiempo.
 
 mdf.getPrice
 
 plot(mdf.getPrice)
 
 
-Ya que tengo todo el historial de predictores quiero encontrar qué valores
-promedio le corresponde a cada uno de los info.
+#Ya que tengo todo el historial de predictores quiero encontrar qué valores
+#promedio le corresponde a cada uno de los info.
 
-Quiero entonces algo que come predictores y que regresa el predictor promedio
+#Quiero entonces algo que come predictores y que regresa el predictor promedio
 
 function avePred(info)
     a = mean([info[i][1] for i in 1:length(info)])

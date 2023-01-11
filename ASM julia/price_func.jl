@@ -27,6 +27,14 @@ a,b = predict(agente.reglas,model.properties.des.des)
 
 P = model.properties.des.precios[end]*a + b
 
+
+mutable struct Transaction 
+    comprador::Int
+    vendedor::Int 
+    Pt::Float64
+    x::Float64
+end
+
 # Y esta es toda la información que necesito para la función.
 
 function calcTransaction(agente1::Trader,agente2::Trader)
@@ -64,8 +72,29 @@ function calcTransaction(agente1::Trader,agente2::Trader)
 
     # Ahora encontremos x óptimo para ese precio
 
+    if P1 >= P2 # el agente 1 compra y el agente 2 vende 
+        comprador = agente1 
+        vendedor = agente2
+    else
+        comprador = agente2 
+        vendedor = agente1
+    end
 
+    S1 = comprador.wealth.stock 
+    E1 = comprador.wealth.cash
 
+    S2 = vendedor.wealth.stock 
+    E2 = vendedor.wealth.cash 
 
+    r = agente1.properties[:interestRate]
+
+    up = PT*(S2 - S1) + S2*P2 - S1+P1 + (1+r)*(E2-E1)
+    down =  2PT + P1 + P2 - 2*PT*(1+r)
+
+    x = up/down
+
+    #la transación es entre pares, un comparador, un vendedor, a un precio y una cantidad x entre ellos. 
+    # Para ello uso la struct Transaction
+    return Transaction(comprador.id, vendedor.id, PT, x)
 
 end
