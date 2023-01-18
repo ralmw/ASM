@@ -89,12 +89,12 @@ model.properties
 
 
 
-Lo que yo puedo hacer en mi modelo es hacer una struct que pueda aplicar a
-ambos tipos de agentes y distinguirlo usando símbolos tal cómo lo hacen
-aqui, y también hacerme un par de funciones de ayuda para que
-hacer uso de ellas sea mucho más sencillo. Además de llenar los campos que
-un tipo de agente no necesite con nothing por simplicidad.
-Yo creo que puede funcionar bastante bien
+# Lo que yo puedo hacer en mi modelo es hacer una struct que pueda aplicar a
+# ambos tipos de agentes y distinguirlo usando símbolos tal cómo lo hacen
+# aqui, y también hacerme un par de funciones de ayuda para que
+# hacer uso de ellas sea mucho más sencillo. Además de llenar los campos que
+# un tipo de agente no necesite con nothing por simplicidad.
+# Yo creo que puede funcionar bastante bien
 
 #%%
 #Aquí comienza el modelo de presa depredador

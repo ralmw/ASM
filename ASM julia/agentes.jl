@@ -30,6 +30,7 @@ function initialize_model(properties;
         # aquí debo crear al descriptor-especialista como atributo del modelo
         des = initializeDescriptor(properties),
         vars = properties,
+        Graph = createAgentTopology(properties)
     )
     model = ABM(Trader, space; properties = prop, scheduler = Schedulers.randomly)
     id = 0

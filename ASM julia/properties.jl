@@ -20,7 +20,8 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     :descriptor => 3,
     :riskAversion => 0.001, :gaActivationFrec => 350,
     :initStock => 1.0, :iniPrecio => 100,
-    :priceCompromise => "middle" )
+    :priceCompromise => "middle", :graphInitAlg => "strogatz",
+    :n_agents => 100 )
 
 # Valores para priceCompromise: "middle", "proportional"
 # cuando se selecciona "middle" se selecciona el precio que este 
@@ -30,6 +31,9 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
 # mando con la norma euclidiana a la riqueza de los agentes, a1,a2 
 # para luego dividir el intervalo entre precios en a1+a2 se seleccionar el 
 # precio que beneficie al más rico  
+
+# :graphInitAlg : "simple", "barabasi", "dorogovtsev", "strogatz"
+
 
 properties[:descriptor]
 
