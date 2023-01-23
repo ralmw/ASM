@@ -59,8 +59,22 @@ function createAgentTopology(properties)
     elseif properties[:graphInitAlg] == "strogatz"
         G = watts_strogatz(n,4,0.3)
     else
-        
+        error("No se ha seleccionado un algoritmo de inicialización valido para la topología.")
     end
+
     return G
-    
+end
+
+function stepAgentTopology(G, properties)
+    modMethod = properties[:topologyStepMethod]
+
+    if modMethod == "constant topology"
+        ## La topología se mantiene constante a lo largo de la ejecución
+    elseif modMethod == "dynamic topology"
+        # cod 
+    else 
+        error("No se ha seleccionado un método de modificación de la topología válido.")
+    end
+
+    return G
 end

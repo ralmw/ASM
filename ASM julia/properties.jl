@@ -21,7 +21,8 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     :riskAversion => 0.001, :gaActivationFrec => 350,
     :initStock => 1.0, :iniPrecio => 100,
     :priceCompromise => "middle", :graphInitAlg => "strogatz",
-    :n_agents => 100 )
+    :n_agents => 100, :topologyStepMethod => "constant topology",
+    :priceType => "local", transJudgement => "continuous" )
 
 # Valores para priceCompromise: "middle", "proportional"
 # cuando se selecciona "middle" se selecciona el precio que este 
@@ -33,6 +34,12 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
 # precio que beneficie al más rico  
 
 # :graphInitAlg : "simple", "barabasi", "dorogovtsev", "strogatz"
+
+# :topologyStepMethod : "constant topology", "dynamic topology"
+
+# :priceType : "local", "global"
+
+# transJudgement : "continuous", "discrete"
 
 
 properties[:descriptor]

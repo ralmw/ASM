@@ -39,16 +39,30 @@ using Random, Distributions
 
 entradas:
 p : nuevo precio
+des : descriptor 
+
+simDiv : indica si se debe simular el proceso de Ornstein_Uhlenbeck 
+    o si el nuevo valor sera dado como parametro a la función 
+D : el nuevo dividendo dado cómo parametro, esto se usa cuando el 
+    el nuevo valor del dividendo ya se calculo en otra parte.
 
 Esta función actualiza el descriptor con el nuevo precio
+Los parámetros adicionales se usan ahora que el modelo 
+fue actualizado para que cada agente tenga su propio descriptor 
+y así permitir por completo la existencia de precios locales.
+
 """
-function updateDescriptor!(P, des)
+function updateDescriptor!(P, des; simDiv=True, D = 0)
     # Primero tengo que actualiza las series del precio y dividendo
     deleteat!(des.precios, 1)
     push!(des.precios, P)
 
     deleteat!(des.dividendo, 1)
-    d = Ornstein_Uhlenbeck(des.dividendo[end], 5, des.properties)
+    if simDiv == true
+        d = Ornstein_Uhlenbeck(des.dividendo[end], 5, des.properties)
+    else 
+        d = D
+    end
     push!(des.dividendo, d )
 
     # y se recalcula el descriptor

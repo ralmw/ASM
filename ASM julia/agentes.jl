@@ -8,6 +8,15 @@ mutable struct Wealth
     stock::Float64
 end # mutable struct
 
+"""
+    mutable struct Trader <: AbstractAgent
+
+
+    Estructura que constituye a un agente dentro del modelo.
+
+    la propiedad des hace referencia al descriptor propio 
+    del agente, cada agente tendrá su propio registro de los precios 
+"""
 mutable struct Trader <: AbstractAgent
     id::Int
     pos::Tuple{Int,Int}
@@ -15,6 +24,8 @@ mutable struct Trader <: AbstractAgent
     reglas
     properties::Dict
     GA_time::Int # when 0 it is time to execute the GA alg
+    des
+    neighborhud::Dict # Se almacena si el vínculo con el vecino es beneficioso 
 end # mutable struct
 
 function initialize_model(properties;
@@ -30,7 +41,7 @@ function initialize_model(properties;
         # aquí debo crear al descriptor-especialista como atributo del modelo
         des = initializeDescriptor(properties),
         vars = properties,
-        Graph = createAgentTopology(properties)
+        graph = createAgentTopology(properties)
     )
     model = ABM(Trader, space; properties = prop, scheduler = Schedulers.randomly)
     id = 0
@@ -39,7 +50,8 @@ function initialize_model(properties;
         # aquí debo llenar los atributos de mis agentes
         reglas = createRules(properties)
         time = floor(Int,rand(Exponential(properties[:gaActivationFrec])))
-        agent = Trader(id, (0,0), Wealth(10000.0, properties[:initStock]), reglas, properties, time )
+        agent = Trader(id, (0,0), Wealth(10000.0, properties[:initStock]), reglas, properties, time,
+            initializeDescriptor(properties), Dict(0 => 0.0) )
         add_agent!(agent, model)
     end
 
@@ -57,6 +69,17 @@ la tasa de interés dada.
 """
 function model_step!(model)
     # especialista
+
+    # Utiliza la topología para calcular las transacciones
+    Transactions = calculateTransactions(model)
+    TransDict, PriceDict = unzipTransactions(Transactions)
+    # Se actualizan riquezas y se juzgan vínculos
+    executeTransactions!(model, TransDict, PriceDict) 
+
+    # Hace falta actualizar los descriptores personales 
+        # con el nuevo precio observado y un nuevo valor de dividendo 
+
+
 
     # recopila la información de los agentes
     agents = allagents(model)
