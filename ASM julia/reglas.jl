@@ -177,6 +177,10 @@ end # function
 """
     predict(reglas, des)
 
+entrada: 
+    reglas : lista de reglas cómo las entrega createRules()
+    des : la parte des de des. Sólo el véctor des, no el descriptor completo 
+
 Esta función verifica si alguna de las reglas del agente se activan con
 el descriptor des dado.
 

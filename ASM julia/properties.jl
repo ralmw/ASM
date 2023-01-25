@@ -22,7 +22,8 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     :initStock => 1.0, :iniPrecio => 100,
     :priceCompromise => "middle", :graphInitAlg => "strogatz",
     :n_agents => 100, :topologyStepMethod => "constant topology",
-    :priceType => "local", transJudgement => "continuous" )
+    :priceType => "local", transJudgement => "continuous",
+    :linkageBrakingMethod => "distribution" )
 
 # Valores para priceCompromise: "middle", "proportional"
 # cuando se selecciona "middle" se selecciona el precio que este 
@@ -40,6 +41,14 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
 # :priceType : "local", "global"
 
 # transJudgement : "continuous", "discrete"
+
+# :linkageBrakingMethod : "distribution", "random"
+
+    # "distribution" rompe enlaces usando la calificación de los 
+    # enlaces como probabilidades, se agranda el intervalo para 
+    # que la mayor probabilidad sea de 0.5
+
+    # "random" con una probabilidad p rompe el peor de los enlaces
 
 
 properties[:descriptor]

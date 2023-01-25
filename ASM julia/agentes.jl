@@ -75,11 +75,11 @@ function model_step!(model)
     TransDict, PriceDict = unzipTransactions(Transactions)
     # Se actualizan riquezas y se juzgan vínculos
     executeTransactions!(model, TransDict, PriceDict) 
-
-    # Hace falta actualizar los descriptores personales 
-        # con el nuevo precio observado y un nuevo valor de dividendo 
+    updateDescriptors!(model,PriceDict)
 
 
+    #= 
+    El método detallado en los artículos de LeBaron et. al. 
 
     # recopila la información de los agentes
     agents = allagents(model)
@@ -90,12 +90,15 @@ function model_step!(model)
     #newPrice = -calculateNewPrice( info, dividendo, properties )
     #newPrice = subasta(info, dividendo, properties, precio)
     newPrice = newPriceByAvePred(info, dividendo, properties, precio)
-
     # una vez calculado el nuevo precio actualiza su información con esto
     updateDescriptor!(newPrice, model.properties.des)
-
     # a continuación actualiza la riqueza de los agentes de acuerdo al nuevo precio
-    updateWealth!(agents, newPrice, info, dividendo, properties )
+    updateWealth!(agents, newPrice, info, dividendo, properties ) =#
+
+
+    # Se modifica la topología de los agentes 
+    stepAgentTopology!(model)
+
 
     return
 end # function

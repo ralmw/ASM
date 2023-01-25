@@ -35,7 +35,34 @@ using Random, Distributions
 # des = updateDescriptor(10000,des)
 
 """
-    updateDescriptor(P, des)
+    updateDescriptors!(model, PriceDict)
+
+entradas:
+model : objeto model de Agents.jl 
+PriceDict : Dict de precios observados por los agentes tal cómo
+    es entregado por unzipTransactions()
+
+
+    Esta funcion actualiza los descriptores individuales de cada
+    agente con el precio observado por el agente
+
+    Símula el proceso de Ornstein_Uhlenbeck para que la informacion 
+    sobre el dividendo sea la misma para todos los agentes
+"""
+function updateDescriptors!(model, PriceDict)
+    properties = model.properties.properties
+    an_agent = getindex(model,1)
+    an_des = an_agent.des
+
+    d = Ornstein_Uhlenbeck(an_des.dividendo[end], 5, properties)
+
+    for agent in allagents(model)
+        updateDescriptor!(PriceDict[:agent.id], agent.des, simDiv = False, D = d)
+    end
+end
+
+"""
+    updateDescriptor!(P, des)
 
 entradas:
 p : nuevo precio

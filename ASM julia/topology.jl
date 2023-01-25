@@ -65,16 +65,30 @@ function createAgentTopology(properties)
     return G
 end
 
-function stepAgentTopology(G, properties)
-    modMethod = properties[:topologyStepMethod]
+"""
+    stepAgentTopology(G, properties)
+
+función intermedia que llama la función para modificar la topología en caso
+de que properties así lo pida
+"""
+function stepAgentTopology!(model)
+
+    modMethod = model.properties.properties[:topologyStepMethod]
 
     if modMethod == "constant topology"
         ## La topología se mantiene constante a lo largo de la ejecución
     elseif modMethod == "dynamic topology"
-        # cod 
+        stepDynamicAgentTopology!(model)
     else 
         error("No se ha seleccionado un método de modificación de la topología válido.")
     end
 
-    return G
+    return 
+end
+
+function stepDynamicAgentTopology!(model)
+
+    if linkageBrakingMethod == "distribution"
+
+    
 end
