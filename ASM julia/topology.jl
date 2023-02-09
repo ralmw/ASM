@@ -3,6 +3,8 @@
 
 using Graphs
 using GraphPlot
+using Random 
+using Distributions
 
 G = Graph(3)
 
@@ -85,12 +87,120 @@ function stepAgentTopology!(model)
 
     return 
 end
+"""
+    chopTopology(model)
 
-function stepDynamicAgentTopology!(model)
+distribution: es un método que en el que se rompen lazos con los agentes usando 
+    la calificación del enlace para definir una probabilidad de romper el enlace. 
+    Se calculan los extremos, las calificaciones más altas y más bajas y se define la más baja
+    para que de una probabilidad de :baseLinkageBrakingProbability de romper el enlace. Mientras 
+    que la calificación más alta corresponde con una probabilidad de 0 de romper el enlace. 
 
-    if linkageBrakingMethod == "distribution"
+random: lanza dados Bernoulli con proba :baseLinkageBrakingProbability y si cae verdadero 
+    elimina el lazo con la peor calificación que tenga el agente 
+"""
+function chopTopology!(model)
+    properties = model.properties.properties
+    baseProba = properties[:baseLinkageBrakingProbability]
 
+    if properties[:linkageBrakingMethod] == "distribution"
+        # Para cada uno de los agentes hacemos lo siguiente:
+        for agent in allagents(model)
+            d = agent.neighborhud
+            # calculamos al máximo y al mínimo de sus links
+            maxLink = reduce((x, y) -> d[x] ≥ d[y] ? x : y, keys(d))
+            maxK = d[maxLink]
+            minLink = reduce((x, y) -> d[x] ≤ d[y] ? x : y, keys(d))
+            minK = d[minLink]
+
+            # luego para cada link lanzamos un dado bernoulli con la probabilidad adecuada
+            for neighbor_id in keys(d)
+                p = calcBreakingProba(d[neighbor_id], minK, maxK, baseProba )
+                # hacemos el ensayo Bernoulli 
+                if rand(Bernoulli(p))
+                    # rompemos el link eliminamos de la red 
+                    rem_edge!(model.properties.graph, agent.id, neighbor_id )
+                    # y de la vecindad
+                    delete!(agent.neighborhud, neighbor_id)
+                else
+                    # no hacemos nada
+                end
+            end
+        end
+    elseif properties[:linkageBrakingMethod] == "random"
+        # lanzamos una moneda con proba :baseLinkageBrakingProbability y si es afirmativa la 
+        # la respuesta rompemos el peor de los enlaces del agente 
+        for agent in allagents(model)
+            d = agent.neighborhud
+            # Calculamos el peor de sus links 
+            minLink = reduce((x,y) -> d[x] ≤ d[y] ? x : y, keys[d])
+            # lanzamos la moneda 
+            if rand(Bernoulli(baseProba))
+                # Rompemos el enlace 
+                rem_edge!(model.properties.graph, agent.id, minLink)
+            else
+                # No hacemos nada 
+            end 
+        end
     end
+end
 
+"""
+    growTopology(model)
+
+Crea nuevos enlaces entre los agentes siguiendo los métodos:
+
+random: crea con proba :baseLinkageBrakingProbability un nuevo enlace
+    con un agente tomado al azar dentro de la pila completa de agentes 
+
+distribution: crea enlaces con recomendaciones obtenidad de los lazos 
+    que ya tiene el agente. Con una probabilidad proporcional a la calificación del 
+        # enlace pide recomendación de un agente al enlace, la probabilidad 
+        # máxima sera igual a :baseLinkageSpawningProbability
+"""
+function growTopology(model)
+    properties = model.properties.properties
+    baseProba = properties[:baseLinkageBrakingProbability]
+
+    if properties[:link]
     
+end
+
+"""
+stepDynamicAgentTopology!(model)
+
+Permite que la topología de los agentes cambie en el tiempo. 
+
+distribution: es un método que en el que se rompen lazos con los agentes usando 
+    la calificación del enlace para definir una probabilidad de romper el enlace. 
+    Se calculan los extremos, las calificaciones más altas y más bajas y se define la más baja
+    para que de una probabilidad de :baseLinkageBrakingProbability de romper el enlace. Mientras 
+    que la calificación más alta corresponde con una probabilidad de 0 de romper el enlace. 
+
+random: lanza dados Bernoulli con proba :baseLinkageBrakingProbability y si cae verdadero 
+    elimina el lazo con la peor calificación que tenga el agente 
+"""
+function stepDynamicAgentTopology!(model)
+    # cortamos lazos 
+    chopTopology!(model)
+    # creamos nuevos lazos 
+
+end
+
+"""
+calcBreakingProba(k, minLink, maxLink, Bp)
+
+k: calificación
+minLink: calificación más baja
+maxLink: calificación más alta 
+Bp: probabilidad base 
+
+transforma la calificación de un enlace en una probabilidad para usarse en el
+ensayo Bernoulli
+"""
+function calcBreakingProba(k, minLink, maxLink, Bp)
+    up = maxLink - k
+    down = maxLink - minLink
+
+    return up/down * Bp
 end

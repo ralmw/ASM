@@ -23,7 +23,8 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     :priceCompromise => "middle", :graphInitAlg => "strogatz",
     :n_agents => 100, :topologyStepMethod => "constant topology",
     :priceType => "local", :transJudgement => "continuous",
-    :linkageBrakingMethod => "distribution" )
+    :linkageBrakingMethod => "distribution", :baseLinkageBrakingProbability => 0.5,
+    :linkageSpawningMethod => "random", :baseLinkageSpawningProbability => 0.5 )
 
 # Valores para priceCompromise: "middle", "proportional"
 # cuando se selecciona "middle" se selecciona el precio que este 
@@ -49,6 +50,18 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     # que la mayor probabilidad sea de 0.5
 
     # "random" con una probabilidad p rompe el peor de los enlaces
+
+# :baseLinkageBrakingProbability probabilidad base para romper un enlace con 
+# "distribution" en :linkageBrakingMethod
+
+# :linkageSpawningMethod : "distribution", "random" 
+
+    # "random" crea con :baseLinkageSpawningProbability de probabilidad 
+        # un enlace con un agente al azar dentro de la pila completa de 
+        # agentes 
+    # "distribution" : con una probabilidad proporcional a la calificación del 
+        # enlace pide recomendación de un agente al enlace, la probabilidad 
+        # máxima sera igual a :baseLinkageSpawningProbability
 
 
 properties[:descriptor]
