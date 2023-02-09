@@ -22,7 +22,7 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     :initStock => 1.0, :iniPrecio => 100,
     :priceCompromise => "middle", :graphInitAlg => "strogatz",
     :n_agents => 100, :topologyStepMethod => "constant topology",
-    :priceType => "local", transJudgement => "continuous",
+    :priceType => "local", :transJudgement => "continuous",
     :linkageBrakingMethod => "distribution" )
 
 # Valores para priceCompromise: "middle", "proportional"
@@ -81,4 +81,4 @@ properties[:nBitsReales]
 
 
 
-fin
+#fin

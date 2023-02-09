@@ -21,6 +21,10 @@ plot(mdf.getPrice[1:10])
 
 
 
+model = initialize_model(properties, n_agents = 100)
+_ , mdf = run!(model, agent_step!, model_step!, 11; )
+plot(mdf.getPrice[1:10])
+
 
 agentts = allagents(model)
 

@@ -14,18 +14,18 @@
 # Primero recordemos la estructura de agente usada en el evolutivo
 
 
-agente 
+#agente 
 
 
 # Del agente ncesito su riqueza, su predición y ya.
 
-agente.wealth
-a,b = predict(agente.reglas,model.properties.des.des)
+#agente.wealth
+#a,b = predict(agente.reglas,model.properties.des.des)
 
 # Para obtener la predicción final tengo que aplicar la regla usada para 
 # determinar P del predictor. 
 
-P = model.properties.des.precios[end]*a + b
+#P = model.properties.des.precios[end]*a + b
 
 
 mutable struct Transaction 
@@ -123,7 +123,7 @@ function calculateTransactions(model)
         agent1 = getindex(model, u)
         agent2 = getindex(model, v)
         trans = calcTransaction(agent1,agent2)
-        append!(Transactions,trans)
+        append!(Transactions,[trans])
     end
     return Transactions
 end
@@ -153,7 +153,7 @@ end
     [[Pc, vendedor, Pv, Pt, x]]
 """
 function unzipTransactions(transactions,properties)
-    TransDict = Dict(0 => [[0,0.0,0.0],[0,0.0,0.0]])
+    TransDict = Dict(0 => [[0,0.0,0.0,0.0,0.0],[0,0.0,0.0,0.0,0.0]])
     for trans in transactions
         # estoy usando solamente Id, no agentes
         comprador = trans.comprador
@@ -165,14 +165,14 @@ function unzipTransactions(transactions,properties)
 
         # agregamos transacción al comprador
         if haskey(TransDict,comprador) # Si ya se inicializó la lista de comprador 
-            append!(TransDict[comprador], [Pc, vendedor, Pv, Pt, x])
+            append!(TransDict[comprador], [[Pc, vendedor, Pv, Pt, x]])
         else 
             TransDict[comprador] = [[Pc, vendedor, Pv, Pt, x]]
         end
 
         # Agregamos transacción al vendedor
         if haskey(TransDict, vendedor) # el código es análogo al anterior 
-            append!(TransDict[vendedor], [Pv, comprador, Pc, Pt, -x]) # cambia el signo de x 
+            append!(TransDict[vendedor], [[Pv, comprador, Pc, Pt, -x]]) # cambia el signo de x 
         else
             TransDict[vendedor] = [[Pv, comprador, Pc, Pt, -x]]
         end
@@ -246,7 +246,7 @@ function updateAgentWealth!(agent, TransDict, PriceDict, properties)
     for trans in Transactions
         # actualizo riqueza 
         P_pred = trans[1]
-        id_contraparte = trans[2]
+        id_contraparte = Int64(trans[2])
         Pt = trans[4]
         x = trans[5]
         cash = cash + Pt * x
@@ -258,14 +258,16 @@ function updateAgentWealth!(agent, TransDict, PriceDict, properties)
         # actualizo el valor de vínculo como un promedio ponderado 
         # de lo anterior con el nuevo valor
         α =  0.950
+        println(agent.neighborhud)
+        println(id_contraparte)
         if haskey(agent.neighborhud, id_contraparte)
             # Si ya está no hago nada
         else
-            agent.neighborhud[:id_contraparte] = 0
+            agent.neighborhud[id_contraparte] = 0.0
         end
-        A = agent.neighborhud[:id_contraparte]
+        A = agent.neighborhud[id_contraparte]
         A = A*α + judgement*(1-α)
-        agent.neighborhud[:id_contraparte] = A
+        agent.neighborhud[id_contraparte] = A
     end  
 
 end

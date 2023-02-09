@@ -90,5 +90,7 @@ function stepDynamicAgentTopology!(model)
 
     if linkageBrakingMethod == "distribution"
 
+    end
+
     
 end

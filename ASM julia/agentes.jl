@@ -40,7 +40,7 @@ function initialize_model(properties;
     prop = (
         # aquí debo crear al descriptor-especialista como atributo del modelo
         des = initializeDescriptor(properties),
-        vars = properties,
+        properties = properties,
         graph = createAgentTopology(properties)
     )
     model = ABM(Trader, space; properties = prop, scheduler = Schedulers.randomly)
@@ -72,7 +72,7 @@ function model_step!(model)
 
     # Utiliza la topología para calcular las transacciones
     Transactions = calculateTransactions(model)
-    TransDict, PriceDict = unzipTransactions(Transactions)
+    TransDict, PriceDict = unzipTransactions(Transactions, model.properties.properties)
     # Se actualizan riquezas y se juzgan vínculos
     executeTransactions!(model, TransDict, PriceDict) 
     updateDescriptors!(model,PriceDict)
@@ -86,7 +86,7 @@ function model_step!(model)
     info = [ predict(agent.reglas, model.properties.des.des ) for agent in agents]
     dividendo = model.properties.des.dividendo[end]
     precio = model.properties.des.precios[end]
-    properties = model.properties.vars
+    properties = model.properties.properties
     #newPrice = -calculateNewPrice( info, dividendo, properties )
     #newPrice = subasta(info, dividendo, properties, precio)
     newPrice = newPriceByAvePred(info, dividendo, properties, precio)

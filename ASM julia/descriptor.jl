@@ -6,9 +6,10 @@
 
 module Descriptors
 
-export updateDescriptor!, initializeDescriptor
+export updateDescriptor!, initializeDescriptor, updateDescriptors!
 
 using Random, Distributions
+using Agents
 
 ##########################################
 #########################################
@@ -57,7 +58,7 @@ function updateDescriptors!(model, PriceDict)
     d = Ornstein_Uhlenbeck(an_des.dividendo[end], 5, properties)
 
     for agent in allagents(model)
-        updateDescriptor!(PriceDict[:agent.id], agent.des, simDiv = False, D = d)
+        updateDescriptor!(PriceDict[agent.id], agent.des, simDiv = false, D = d)
     end
 end
 
