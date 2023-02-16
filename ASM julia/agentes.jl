@@ -70,37 +70,39 @@ la tasa de interés dada.
 function model_step!(model)
     # especialista
 
-    # Utiliza la topología para calcular las transacciones
-    Transactions = calculateTransactions(model)
-    TransDict, PriceDict = unzipTransactions(Transactions, model.properties.properties)
-    # Se actualizan riquezas y se juzgan vínculos
-    executeTransactions!(model, TransDict, PriceDict) 
-    updateDescriptors!(model,PriceDict)
+    if model.properties.properties[:specialistType] == "local"
+        # Utiliza la topología para calcular las transacciones
+        Transactions = calculateTransactions(model)
+        TransDict, PriceDict = unzipTransactions(Transactions, model.properties.properties)
+        # Se actualizan riquezas y se juzgan vínculos
+        executeTransactions!(model, TransDict, PriceDict) 
+        updateDescriptors!(model,PriceDict)
+
+        # Se modifica la topología de los agentes 
+        stepAgentTopology!(model)
+    elseif model.properties.properties[:specialistType] == "global"
 
 
-    #= 
-    El método detallado en los artículos de LeBaron et. al. 
+        
+        #El método detallado en los artículos de LeBaron et. al. 
 
-    # recopila la información de los agentes
-    agents = allagents(model)
-    info = [ predict(agent.reglas, model.properties.des.des ) for agent in agents]
-    dividendo = model.properties.des.dividendo[end]
-    precio = model.properties.des.precios[end]
-    properties = model.properties.properties
-    #newPrice = -calculateNewPrice( info, dividendo, properties )
-    #newPrice = subasta(info, dividendo, properties, precio)
-    newPrice = newPriceByAvePred(info, dividendo, properties, precio)
-    # una vez calculado el nuevo precio actualiza su información con esto
-    updateDescriptor!(newPrice, model.properties.des)
-    # a continuación actualiza la riqueza de los agentes de acuerdo al nuevo precio
-    updateWealth!(agents, newPrice, info, dividendo, properties ) =#
+        # recopila la información de los agentes
+        agents = allagents(model)
+        info = [ predict(agent.reglas, model.properties.des.des ) for agent in agents]
+        dividendo = model.properties.des.dividendo[end]
+        precio = model.properties.des.precios[end]
+        properties = model.properties.properties
+        #newPrice = -calculateNewPrice( info, dividendo, properties )
+        #newPrice = subasta(info, dividendo, properties, precio)
+        newPrice = newPriceByAvePred(info, dividendo, properties, precio)
+        # una vez calculado el nuevo precio actualiza su información con esto
+        updateDescriptor!(newPrice, model.properties.des)
+        # a continuación actualiza la riqueza de los agentes de acuerdo al nuevo precio
+        updateWealth!(agents, newPrice, info, dividendo, properties ) 
+    else
+        error("No se ha seleccionado un tipo de espacialista válido.")
+    end
 
-
-    # Se modifica la topología de los agentes 
-    stepAgentTopology!(model)
-
-
-    return
 end # function
 
 """

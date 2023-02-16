@@ -24,7 +24,8 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     :n_agents => 100, :topologyStepMethod => "constant topology",
     :priceType => "local", :transJudgement => "continuous",
     :linkageBrakingMethod => "distribution", :baseLinkageBrakingProbability => 0.5,
-    :linkageSpawningMethod => "random", :baseLinkageSpawningProbability => 0.5 )
+    :linkageSpawningMethod => "random", :baseLinkageSpawningProbability => 0.5,
+    :linkageRecommendationMethod => "random", :specialistType => "local" )
 
 # Valores para priceCompromise: "middle", "proportional"
 # cuando se selecciona "middle" se selecciona el precio que este 
@@ -62,6 +63,16 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     # "distribution" : con una probabilidad proporcional a la calificación del 
         # enlace pide recomendación de un agente al enlace, la probabilidad 
         # máxima sera igual a :baseLinkageSpawningProbability
+
+# :linkageRecommendationMethod : "random", "best" 
+    
+    # "random" escoge a un agente al azar dentro de su vecindad 
+    # "best" escoge al mejor de sus enlaces para recomendar 
+
+# :specialistType : "local", "global"
+
+    # "local": todo sucede a nivel local, este es mi modelo 
+    # "global": un espacialista centralizado, este es el SFI-ASM original
 
 
 properties[:descriptor]

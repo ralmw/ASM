@@ -13,6 +13,8 @@ add_edge!(G,1,3)
 
 gplot(G,nodelabel=1:3)
 
+add_edge!(G, 1,2)
+
 
 
 G = smallgraph("house")
@@ -108,9 +110,9 @@ function chopTopology!(model)
         for agent in allagents(model)
             d = agent.neighborhud
             # calculamos al máximo y al mínimo de sus links
-            maxLink = reduce((x, y) -> d[x] ≥ d[y] ? x : y, keys(d))
+            maxLink = reduce((x, y) -> (d[x] ≥ d[y]) & (x != 0 & y != 0) ? x : y, keys(d))
             maxK = d[maxLink]
-            minLink = reduce((x, y) -> d[x] ≤ d[y] ? x : y, keys(d))
+            minLink = reduce((x, y) -> (d[x] ≤ d[y]) & (x != 0 & y != 0) ? x : y, keys(d))
             minK = d[minLink]
 
             # luego para cada link lanzamos un dado bernoulli con la probabilidad adecuada
@@ -133,7 +135,7 @@ function chopTopology!(model)
         for agent in allagents(model)
             d = agent.neighborhud
             # Calculamos el peor de sus links 
-            minLink = reduce((x,y) -> d[x] ≤ d[y] ? x : y, keys[d])
+            minLink = reduce((x,y) -> (d[x] ≤ d[y]) & (x != 0 & y != 0) ? x : y, keys[d])
             # lanzamos la moneda 
             if rand(Bernoulli(baseProba))
                 # Rompemos el enlace 
@@ -158,12 +160,49 @@ distribution: crea enlaces con recomendaciones obtenidad de los lazos
         # enlace pide recomendación de un agente al enlace, la probabilidad 
         # máxima sera igual a :baseLinkageSpawningProbability
 """
-function growTopology(model)
+function growTopology!(model)
     properties = model.properties.properties
     baseProba = properties[:baseLinkageBrakingProbability]
 
-    if properties[:link]
-    
+    if properties[:linkageBrakingMethod] == "distribution"
+        # Para cada uno de los agentes hacemos lo siguiente:
+        for agent in allagents(model)
+            d = agent.neighborhud
+            # calculamos al máximo y al mínimo de sus links
+            maxLink = reduce((x, y) -> (d[x] ≥ d[y]) & (x != 0 & y != 0) ? x : y, keys(d))
+            maxK = d[maxLink]
+            minLink = reduce((x, y) -> (d[x] ≤ d[y]) & (x != 0 & y != 0) ? x : y, keys(d))
+            minK = d[minLink]
+
+            # luego para cada link lanzamos un dado bernoulli con la probabilidad adecuada
+            for neighbor_id in keys(d)
+                p = calcSpawningProbability(d[neighbor_id], minK, maxK, baseProba )
+                # hacemos el ensayo Bernoulli 
+                if rand(Bernoulli(p))
+                    # pedimos la recomendación de un agente a nuestro vecino
+                    new_id = recommendNewLink(neighbor_id, model)
+                    # agregamos el nuevo enlace a la red 
+                    add_edge!(model.properties.graph, agent.id, new_id)
+                else
+                    # no hacemos nada
+                end
+            end
+        end
+    elseif properties[:linkageSpawningMethod] == "random"
+        for agent in allagents(model)
+            # lanzamos una model con proba baseProba, si acierta generamos un 
+            # enlace nuevo 
+            if rand(Bernoulli(baseProba))
+                # escogemos un índice al azar entre todos los posibles 
+                n_agents = nagents(model)
+                new_id = rand(1:n_agents)
+                # Creamos el enlace con este nuevo agente
+                # solo hace falta hacerlo en la gráfica.
+                add_edge!(model.properties.graph,agent.id, new_id )
+            end
+        end
+    end
+       
 end
 
 """
@@ -184,6 +223,7 @@ function stepDynamicAgentTopology!(model)
     # cortamos lazos 
     chopTopology!(model)
     # creamos nuevos lazos 
+    growTopology!(model)
 
 end
 
@@ -204,3 +244,55 @@ function calcBreakingProba(k, minLink, maxLink, Bp)
 
     return up/down * Bp
 end
+
+"""
+calcSpawningProbability()
+
+k: calificación
+minLink: calificación más baja
+maxLink: calificación más alta 
+Bp: probabilidad base 
+
+Función de calcula la probabilidad de generación de un link nuevo usando 
+la calificación del link, 
+"""
+function calcSpawningProbability(k, minLink, maxLink, Bp)
+    up = k + minLink
+    down = maxLink + minLink 
+    return up/down * Bp
+end
+
+"""
+recommendNewLink(neighbor_id, model)
+
+neighbor_id: id del agente recomendor 
+model: modelo de agents.jl
+
+recomienda un agente con quien establecer un enlace, si se escoge 
+:linkageRecommendationMethod == "random" se toma un agente aleatorio
+dentro de la vecindad de neighbor_id
+:linkageRecommendationMethod == "best" recomienda al mejor dentro de 
+su vecindad usando la calificación de links como base.
+"""
+function recommendNewLink(neighbor_id, model)
+    agent = getindex(model, neighbor_id)
+    properties = model.properties.properties
+    
+    if properties[:linkageRecommendationMethod] == "random"
+        cont = true
+        while cont 
+            new_id = rand(keys(agent.neighborhud))
+            if new_id != 0
+                cont = false
+            end
+        end
+        return new_id
+        
+    elseif properties[:linkageRecommendationMethod] == "best"
+        d = agent.neighborhud
+        maxLink = reduce((x, y) -> (d[x] ≥ d[y]) & (x != 0 & y != 0) ? x : y, keys(d))
+        return maxLink
+    end
+
+end
+
