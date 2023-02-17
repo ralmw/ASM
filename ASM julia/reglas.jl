@@ -1,6 +1,6 @@
 # Este el algoritmo genético del modulo reglas.
 
-module Reglas
+# module Reglas
 
 export GA, predict, createRules, updateFitness!
 
@@ -887,4 +887,4 @@ function uniformCrossover(cond1, cond2)
 end # function
 
 
-end  # module
+# end  # module

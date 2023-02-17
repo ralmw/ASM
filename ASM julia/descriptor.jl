@@ -4,11 +4,11 @@
 # Idealmente habrá un agente que será el que lleve acabo los cálculos
 # relacionados al precio y su descripción
 
-module Descriptors
+# module Descriptors
 
 export updateDescriptor!, initializeDescriptor, updateDescriptors!
 
-using Random, Distributions
+using Random, Distributions, Statistics
 using Agents
 
 ##########################################
@@ -60,6 +60,10 @@ function updateDescriptors!(model, PriceDict)
     for agent in allagents(model)
         updateDescriptor!(PriceDict[agent.id], agent.des, simDiv = false, D = d)
     end
+
+    # update global descriptor 
+    p = mean([PriceDict[i] for i in 1:model.n_agents]) # reference global price
+    updateDescriptor!(p, model.properties.des, simDiv = false, D = d)
 end
 
 """
@@ -627,4 +631,4 @@ function Ehrentreich_46(precios, dividendo)
     return mean(precios[end-100+1:end]) > mean(precios[end-500+1:end])
 end # function
 
-end  # module Descriptor
+# end  # module Descriptor

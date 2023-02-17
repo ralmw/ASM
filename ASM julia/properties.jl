@@ -13,6 +13,9 @@
 # de Joshi: 2
 # de Ehrentreich: 3
 
+export validateProperties
+
+
 properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     :maxPerCluster => 10, :nReglas => 100,
     :minNumHijos => 20, :tamañoTorneo => 5,
@@ -75,21 +78,23 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     # "global": un espacialista centralizado, este es el SFI-ASM original
 
 
-properties[:descriptor]
 
-if properties[:descriptor] == 1 # Descriptor de LeBaron
-    properties[:nBits] = 7
-    properties[:nBitsReales] = 1
-elseif properties[:descriptor] == 2 # Descriptor de Joshi
-    properties[:nBits] = 43
-    properties[:nBitsReales] = 2
-elseif properties[:descriptor] == 3 # Descriptor de Ehrentreich
-    properties[:nBits] = 46
-    properties[:nBitsReales] = 3
+function validateProperties(; properties = properties)
+
+    #properties[:descriptor]
+
+    if properties[:descriptor] == 1 # Descriptor de LeBaron
+        properties[:nBits] = 7
+        properties[:nBitsReales] = 1
+    elseif properties[:descriptor] == 2 # Descriptor de Joshi
+        properties[:nBits] = 43
+        properties[:nBitsReales] = 2
+    elseif properties[:descriptor] == 3 # Descriptor de Ehrentreich
+        properties[:nBits] = 46
+        properties[:nBitsReales] = 3
+    end
+    return properties
 end
-
-properties[:nBits]
-properties[:nBitsReales]
 
 
 

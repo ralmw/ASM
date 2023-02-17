@@ -3,6 +3,8 @@
 using Agents, Random
 using Distributions
 
+export initialize_model, agent_step!, model_step!
+
 mutable struct Wealth
     cash::Float64
     stock::Float64

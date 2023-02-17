@@ -8,7 +8,7 @@
 # calculateNewPrice(info, dividendo, properties)
 # subasta(info)
 
-module Specialists
+# module Specialists
 
 using Statistics
 
@@ -121,4 +121,4 @@ function calculateOptimalHolding(price, predictor, dividendo, properties)
 
 end # function
 
-end  # module Specialists
+# end  # module Specialists

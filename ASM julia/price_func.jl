@@ -27,6 +27,7 @@
 
 #P = model.properties.des.precios[end]*a + b
 
+export calculateTransactions, unzipTransactions, executeTransactions!
 
 mutable struct Transaction 
     comprador::Int
