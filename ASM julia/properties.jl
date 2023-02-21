@@ -26,7 +26,7 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     :priceCompromise => "middle", :graphInitAlg => "strogatz",
     :n_agents => 100, :topologyStepMethod => "dynamic topology",
     :priceType => "local", :transJudgement => "continuous",
-    :linkageBrakingMethod => "distribution", :baseLinkageBrakingProbability => 0.5,
+    :linkageBrakingMethod => "distribution", :baseLinkageBrakingProbability => 0.1,
     :linkageSpawningMethod => "distribution", :baseLinkageSpawningProbability => 0.5,
     :linkageRecommendationMethod => "random", :specialistType => "local" )
 

@@ -19,23 +19,40 @@ model = initialize_model(properties, n_agents = 100)
 _ , mdf = run!(model, agent_step!, model_step!, 11; mdata)
 plot(mdf.getPrice[1:10])
 
-####################################
-using Agents 
-using .Unam_ASM 
-using Random 
+###############################################################
+using Agents
+using .Unam_ASM
+using Random
 using Distributions
 using GraphPlot
+using Graphs
 
 properties = validateProperties()
 
 model = initialize_model(properties, n_agents = 100)
 _ , mdf = run!(model, agent_step!, model_step!, 100; )
 
-agent = getindex(model, 90)
-d = agent.neighborhud
+agent = getindex(model, 39)
+d = agent.neighborhood
+all_neighbors(G,39)
+length(all_neighbors(G,39))
 
 G = model.properties.graph
-gplot(G)
+nodelabels = 1:nv(G)
+gplot(G, nodelabel = nodelabels)
+
+###############################################################
+
+# diccionarios y gráfica no tienen la misma información
+
+G = model.properties.graph
+for agent in allagents(model)
+    print(agent.id, ": ")
+    print(length(all_neighbors(G, agent.id)) )
+    print(" ", length(keys(agent.neighborhood))-1)
+    println(" ", length(all_neighbors(G, agent.id)) == length(keys(agent.neighborhood))-1 )
+end
+
 
 #############################################
 

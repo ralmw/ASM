@@ -261,16 +261,16 @@ function updateAgentWealth!(agent, TransDict, PriceDict, properties)
         # actualizo el valor de vínculo como un promedio ponderado 
         # de lo anterior con el nuevo valor
         α =  0.950
-        #println(agent.neighborhud)
+        #println(agent.neighborhood)
         #println(id_contraparte)
-        if haskey(agent.neighborhud, id_contraparte)
+        if haskey(agent.neighborhood, id_contraparte)
             # Si ya está no hago nada
         else
-            agent.neighborhud[id_contraparte] = 0.0
+            agent.neighborhood[id_contraparte] = 0.0
         end
-        A = agent.neighborhud[id_contraparte]
+        A = agent.neighborhood[id_contraparte]
         A = A*α + judgement*(1-α)
-        agent.neighborhud[id_contraparte] = A
+        agent.neighborhood[id_contraparte] = A
     end  
 
 end
@@ -289,22 +289,26 @@ function judgeTransaction(Pt, Price, P_pred, properties)
     if properties[:transJudgement] == "continuous"
         if Price < P_pred 
             return (Pt - P_pred)/(P_pred - Price)
-        else
+        elseif Price > P_pred
             return (P_pred - Pt)/(Price - P_pred)
+        else # Precio y predicción iguales, es posible?
+            return (P_pred - Pt)/(0.000000001)
         end
     elseif properties[:transJudgement] == "discrete"
         if Price < P_pred 
             if Pt > P_pred 
                 return 1 
             else 
-                return 0 
+                return -1
             end
-        else 
+        elseif Price > P_pred
             if Pt < P_pred 
                 return 1 
             else
-                return 0 
+                return -1
             end
+        else
+            return 0
         end
     end
 end

@@ -27,7 +27,7 @@ mutable struct Trader <: AbstractAgent
     properties::Dict
     GA_time::Int # when 0 it is time to execute the GA alg
     des
-    neighborhud::Dict # Se almacena si el vínculo con el vecino es beneficioso 
+    neighborhood::Dict # Se almacena si el vínculo con el vecino es beneficioso 
 end # mutable struct
 
 function initialize_model(properties;
@@ -73,11 +73,17 @@ function model_step!(model)
     # especialista
 
     if model.properties.properties[:specialistType] == "local"
+
+        # Veamos la topología
+        G = model.properties.graph
+        nodelabels = 1:nv(G)
+        gplot(G, nodelabel = nodelabels)
+
         # Utiliza la topología para calcular las transacciones
         Transactions = calculateTransactions(model)
         TransDict, PriceDict = unzipTransactions(Transactions, model.properties.properties)
         # Se actualizan riquezas y se juzgan vínculos
-        executeTransactions!(model, TransDict, PriceDict) 
+        executeTransactions!(model, TransDict, PriceDict)
         updateDescriptors!(model,PriceDict)
 
         # Se modifica la topología de los agentes 
