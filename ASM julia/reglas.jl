@@ -2,7 +2,7 @@
 
 # module Reglas
 
-export GA, predict, createRules, updateFitness!
+#export GA, predict, createRules, updateFitness!
 
 ## quiero que desde los agentes pueda llamar.
 #predict(des, reglas) y me regrese la predicción correspondiente a la mejor regla

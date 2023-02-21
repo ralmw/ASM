@@ -24,10 +24,10 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     :riskAversion => 0.001, :gaActivationFrec => 350,
     :initStock => 1.0, :iniPrecio => 100,
     :priceCompromise => "middle", :graphInitAlg => "strogatz",
-    :n_agents => 100, :topologyStepMethod => "constant topology",
+    :n_agents => 100, :topologyStepMethod => "dynamic topology",
     :priceType => "local", :transJudgement => "continuous",
     :linkageBrakingMethod => "distribution", :baseLinkageBrakingProbability => 0.5,
-    :linkageSpawningMethod => "random", :baseLinkageSpawningProbability => 0.5,
+    :linkageSpawningMethod => "distribution", :baseLinkageSpawningProbability => 0.5,
     :linkageRecommendationMethod => "random", :specialistType => "local" )
 
 # Valores para priceCompromise: "middle", "proportional"

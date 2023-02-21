@@ -19,11 +19,25 @@ model = initialize_model(properties, n_agents = 100)
 _ , mdf = run!(model, agent_step!, model_step!, 11; mdata)
 plot(mdf.getPrice[1:10])
 
+####################################
+using Agents 
+using .Unam_ASM 
+using Random 
+using Distributions
+using GraphPlot
 
+properties = validateProperties()
 
 model = initialize_model(properties, n_agents = 100)
-_ , mdf = run!(model, agent_step!, model_step!, 11; )
-plot(mdf.getPrice[1:10])
+_ , mdf = run!(model, agent_step!, model_step!, 100; )
+
+agent = getindex(model, 90)
+d = agent.neighborhud
+
+G = model.properties.graph
+gplot(G)
+
+#############################################
 
 
 agentts = allagents(model)

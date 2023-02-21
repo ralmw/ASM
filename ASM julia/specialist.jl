@@ -12,7 +12,7 @@
 
 using Statistics
 
-export calculateNewPrice, calculateOptimalHolding, subasta, newPriceByAvePred
+#export calculateNewPrice, calculateOptimalHolding, subasta, newPriceByAvePred
 
 """
     newPriceByAvePred(info, dividendo, properties, precio)

@@ -27,7 +27,7 @@
 
 #P = model.properties.des.precios[end]*a + b
 
-export calculateTransactions, unzipTransactions, executeTransactions!
+#export calculateTransactions, unzipTransactions, executeTransactions!
 
 mutable struct Transaction 
     comprador::Int
@@ -44,13 +44,15 @@ function calcTransaction(agente1::Trader,agente2::Trader)
     a1,b1 = predict(agente1.reglas,agente1.des.des)
     a2,b2 = predict(agente2.reglas,agente2.des.des)
 
-    Pt = model.properties.des.precios[end] # último precio 
+    Pt1 = agente1.des.precios[end] # último precio del agente 1
+    Pt2 = agente2.des.precios[end] # "" del agente 2
+
     # minúscula precio anterior 
     # mayúscula precio actual en la transacción
-    Dt = model.properties.des.des[end] # último dividendo
+    Dt = agente1.des.dividendo[end] # último dividendo
 
-    P1 = a1*(Pt + Dt) + b1 # predicción del agente 1
-    P2 = a2*(Pt + Dt) + b2 # precio predicho por el agente 2
+    P1 = a1*(Pt1 + Dt) + b1 # predicción del agente 1
+    P2 = a2*(Pt2 + Dt) + b2 # precio predicho por el agente 2
 
     # Y ahora toca tomar el precio de acuerdo con el criterio seleccionado, ya sea 
     # justo a la mitad a proporcional a la riqueza de los agentes.
@@ -183,11 +185,11 @@ function unzipTransactions(transactions,properties)
     # ahora calculamos el diccionario de nuevos precios 
     PriceDict = Dict(0 => 0.0)
     if properties[:priceType] == "local"
-        for i ∈ 1:properties[:n_agents]
+        for i ∈ keys(TransDict)
             PriceDict[i] = mean([TransDict[i][j][4] for j in 1:length(TransDict[i]) ] )
         end
         # Calculamos el promedio grobal 
-        PriceDict[0] = mean([PriceDict[j] for j in 1:properties[:n_agents]])
+        PriceDict[0] = mean([PriceDict[j] for j in keys(PriceDict) ])
 
     elseif properties[:priceType] == "global" # Si solo hay un precio global
         PriceDict[0] = mean([trans.Pt for trans in transactions])
@@ -259,8 +261,8 @@ function updateAgentWealth!(agent, TransDict, PriceDict, properties)
         # actualizo el valor de vínculo como un promedio ponderado 
         # de lo anterior con el nuevo valor
         α =  0.950
-        println(agent.neighborhud)
-        println(id_contraparte)
+        #println(agent.neighborhud)
+        #println(id_contraparte)
         if haskey(agent.neighborhud, id_contraparte)
             # Si ya está no hago nada
         else

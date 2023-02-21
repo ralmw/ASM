@@ -6,7 +6,7 @@
 
 # module Descriptors
 
-export updateDescriptor!, initializeDescriptor, updateDescriptors!
+#export updateDescriptor!, initializeDescriptor, updateDescriptors!
 
 using Random, Distributions, Statistics
 using Agents
@@ -62,7 +62,7 @@ function updateDescriptors!(model, PriceDict)
     end
 
     # update global descriptor 
-    p = mean([PriceDict[i] for i in 1:model.n_agents]) # reference global price
+    p = mean([PriceDict[i] for i in 1:nagents(model)]) # reference global price
     updateDescriptor!(p, model.properties.des, simDiv = false, D = d)
 end
 
