@@ -290,7 +290,12 @@ function calcBreakingProba(k, minLink, maxLink, Bp)
     up = maxLink - k
     down = maxLink - minLink
 
-    return up/down * Bp
+    res = up/down * Bp 
+    if isnan(res)
+        return Bp
+    else
+        return res 
+    end
 end
 
 """
@@ -307,7 +312,13 @@ la calificación del link,
 function calcSpawningProbability(k, minLink, maxLink, Bp)
     up = k - minLink
     down = maxLink - minLink 
-    return up/down * Bp
+    
+    res = up/down * Bp 
+    if isnan(res)
+        return Bp
+    else
+        return res 
+    end
 end
 
 """

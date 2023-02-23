@@ -6,18 +6,25 @@ model = initialize_model(properties, n_agents = 100)
 # recolección de datos
 getPrice(model) = model.properties.des.precios[end]
 getDividend(model) = model.properties.des.dividendo[end]
-mdata = [getPrice, getDividend, getInfo]
+mdata = [getPrice, getDividend]
 
-function getInfo(model)
-    agents = allagents(model)
-    return [ predict(agent.reglas, model.properties.des.des ) for agent in agents]
-end # function
+getAgentPrice(agent) = agent.des.precios[end]
+adata = [getAgentPrice]
 
 
 
 model = initialize_model(properties, n_agents = 100)
-_ , mdf = run!(model, agent_step!, model_step!, 11; mdata)
-plot(mdf.getPrice[1:10])
+# corremos el modelo 1000 tiempos como fase transitoria
+_,_ = run!(model, agent_step!, model_step!, 1000; )
+# recolectamos la información de los siguientes 10000 tiempos
+adf , mdf = run!(model, agent_step!, model_step!, 10000; mdata,adata)
+plot(mdf.getPrice[1:10000])
+plot(mdf.getDividend[1:10000])
+
+step = 5000
+ejem = subset(adf, :step => a -> a .== step)
+histogram(ejem[!,:getAgentPrice], bins = 14)
+subset(mdf, :step => a -> a .== step)
 
 ###############################################################
 using Agents
@@ -26,10 +33,11 @@ using Random
 using Distributions
 using GraphPlot
 using Graphs
+using Plots
 
 properties = validateProperties()
 
-model = initialize_model(properties, n_agents = 100)
+model = initialize_model(properties, n_agents = 1000)
 _ , mdf = run!(model, agent_step!, model_step!, 100; )
 
 agent = getindex(model, 39)
