@@ -55,7 +55,11 @@ function updateDescriptors!(model, PriceDict)
     an_agent = getindex(model,1)
     an_des = an_agent.des
 
-    d = Ornstein_Uhlenbeck(an_des.dividendo[end], 5, properties)
+    if properties[:activeDividend] == true
+        d = Ornstein_Uhlenbeck(an_des.dividendo[end], 5, properties)
+    else
+        d = 1
+    end
 
     for agent in allagents(model)
         updateDescriptor!(PriceDict[agent.id], agent.des, simDiv = false, D = d)
@@ -84,16 +88,21 @@ fue actualizado para que cada agente tenga su propio descriptor
 y así permitir por completo la existencia de precios locales.
 
 """
-function updateDescriptor!(P, des; simDiv=True, D = 0)
+function updateDescriptor!(P, des; simDiv=True, D = 1)
     # Primero tengo que actualiza las series del precio y dividendo
     deleteat!(des.precios, 1)
     push!(des.precios, P)
 
     deleteat!(des.dividendo, 1)
-    if simDiv == true
-        d = Ornstein_Uhlenbeck(des.dividendo[end], 5, des.properties)
+
+    if des.properties[:activeDividend] == true
+        if simDiv == true
+            d = Ornstein_Uhlenbeck(des.dividendo[end], 5, des.properties)
+        else 
+            d = D
+        end
     else 
-        d = D
+        d = 1
     end
     push!(des.dividendo, d )
 

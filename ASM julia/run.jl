@@ -15,18 +15,19 @@ adata = [getAgentPrice]
 
 model = initialize_model(properties, n_agents = 100)
 # corremos el modelo 1000 tiempos como fase transitoria
-_,_ = run!(model, agent_step!, model_step!, 1000; )
+_,_ = run!(model, agent_step!, model_step!, 100; )
 # recolectamos la información de los siguientes 10000 tiempos
-adf , mdf = run!(model, agent_step!, model_step!, 10000; mdata,adata)
-plot(mdf.getPrice[1:10000])
-plot(mdf.getDividend[1:10000])
+adf , mdf = run!(model, agent_step!, model_step!, 100; mdata,adata)
+plot(mdf.getPrice[1:100])
+plot(mdf.getDividend[1:100])
 
-step = 5000
+step = 90
 ejem = subset(adf, :step => a -> a .== step)
 histogram(ejem[!,:getAgentPrice], bins = 14)
 subset(mdf, :step => a -> a .== step)
 
 ###############################################################
+include("join.jl")
 using Agents
 using .Unam_ASM
 using Random
@@ -34,10 +35,14 @@ using Distributions
 using GraphPlot
 using Graphs
 using Plots
+using DataFrames
 
 properties = validateProperties()
+properties[:n_agents] = 100
+properties[:modelTraining] = true
+contador = 0
 
-model = initialize_model(properties, n_agents = 1000)
+model = initialize_model(properties, n_agents = 100)
 _ , mdf = run!(model, agent_step!, model_step!, 100; )
 
 agent = getindex(model, 39)

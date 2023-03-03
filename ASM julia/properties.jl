@@ -19,16 +19,21 @@ export validateProperties
 properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     :maxPerCluster => 10, :nReglas => 100,
     :minNumHijos => 20, :tamañoTorneo => 5,
-    :interestRate => 0.001, :dividendMean => 1000,
+    :interestRate => 0.001, :dividendMean => 1000, :activeDividend => true,
     :descriptor => 3,
     :riskAversion => 0.001, :gaActivationFrec => 350,
     :initStock => 1.0, :iniPrecio => 100,
     :priceCompromise => "middle", :graphInitAlg => "strogatz",
-    :n_agents => 1000, :topologyStepMethod => "dynamic topology",
+    :n_agents => 1000, :topologyStepMethod => "watts strogatz",
     :priceType => "local", :transJudgement => "continuous",
     :linkageBrakingMethod => "distribution", :baseLinkageBrakingProbability => 0.1,
     :linkageSpawningMethod => "distribution", :baseLinkageSpawningProbability => 0.5,
-    :linkageRecommendationMethod => "random", :specialistType => "local" )
+    :linkageRecommendationMethod => "random", :specialistType => "local",
+    :modelTraining => false, :WattsStrogatzAlgProbability => 0.01 )
+
+# :activeDividend : true , false 
+    # true, el dividendo es un proceso de Ornstein_Uhlenbeck
+    # false, el dividendo es constante 1
 
 # Valores para priceCompromise: "middle", "proportional"
 # cuando se selecciona "middle" se selecciona el precio que este 
@@ -41,7 +46,7 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
 
 # :graphInitAlg : "simple", "barabasi", "dorogovtsev", "strogatz"
 
-# :topologyStepMethod : "constant topology", "dynamic topology"
+# :topologyStepMethod : "constant topology", "dynamic topology", "watts strogatz"
 
 # :priceType : "local", "global"
 
@@ -76,6 +81,16 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
 
     # "local": todo sucede a nivel local, este es mi modelo 
     # "global": un espacialista centralizado, este es el SFI-ASM original
+
+# :modelTraining : true, false 
+
+    # true : se entrenada el modelo usando datos externos 
+    # false : no se entrenará al modelo usando datos externos 
+
+# :WattsStrogatzAlgProbability : a probability 
+
+    # probability to rewire a given edge in the Watts Strogatz algorithm 
+    # this is used to step de agent topology
 
 
 

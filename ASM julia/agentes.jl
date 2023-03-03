@@ -72,6 +72,12 @@ la tasa de interés dada.
 function model_step!(model)
     # especialista
 
+    if model.properties.properties[:modelTraining] == true
+        #println(trainingVector[i])
+        println(step)
+        
+    end
+
     if model.properties.properties[:specialistType] == "local"
 
         # Veamos la topología
@@ -180,7 +186,12 @@ de acuerdo al último precio calculado almacenado en model.properties.price.
 """
 function agent_step!(agent, model)
     # primero actualiza el fitness de las reglas usando la información del precio
-    updateFitness!(model.properties.des, agent.reglas)
+    if model.properties.properties[:specialistType] == "global"
+        updateFitness!(model.properties.des, agent.reglas) # fitness vs des global
+    elseif model.properties.properties[:specialistType] == "local"
+        updateFitness!(agent.des, agent.reglas) # fitness vs des local
+    end
+
     agent.GA_time -= 1
 
     # si es el momento, ejecuta el algoritmo genético

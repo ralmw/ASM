@@ -58,12 +58,106 @@ function stepAgentTopology!(model)
         ## La topología se mantiene constante a lo largo de la ejecución
     elseif modMethod == "dynamic topology"
         stepDynamicAgentTopology!(model)
+    elseif modMethod == "watts strogatz"
+        stepWattsStrogatzAlgorithm!(model)
     else 
         error("No se ha seleccionado un método de modificación de la topología válido.")
     end
 
     return 
 end
+
+"""
+stepWattsStrogatzAlgorithm!(model)
+
+model : model from Agents.jl
+
+Enforces a small world structure to the agent topology 
+
+Esta función nos ayuda a mantener una estructura de mundo pequeño en la topología 
+de los agentes. Itera sobre todas las aristas del modelo y con una proba P 
+cambia una de los extremos del arista por otro aleatorio del modelo dónde no se 
+permiten aristas repetidos ni selfloops
+"""
+function stepWattsStrogatzAlgorithm!(model)
+
+    p = model.properties.properties[:WattsStrogatzAlgProbability]
+    G = model.properties.graph
+
+    # iteramos sobre cada una de las aristas 
+    for e in edges(G)
+        # lanzamos el dado
+        if rand(Bernoulli(p))
+            # We do rewire the edge 
+
+            # enforces net connectedness 
+            old, keep, necessary =  validate_sort_edge(e, G)
+            if necessary 
+                continue
+            else # decides randombly which side to disconnect
+                if rand(Bernoulli(0.5))
+                    # to decide which side of the edge to rewire 
+                    old = src(e)
+                    keep = dst(e)
+                else
+                    old = dst(e)
+                    keep = src(e)
+                end
+            end
+            # Search for a suitable new endge end 
+            while true
+                new = rand(1:nagents(model))
+                new == old && break # the same old extreme
+                new == keep && continue # no selfloops 
+                if add_edge!(model.properties.graph,keep,new)
+                    rem_edge!(model.properties.graph, keep, old) # rewire complete 
+                    break
+                end
+            end
+        end
+    end # iterated over the whole edge set 
+end
+
+"""
+    validate_sort_edge(e, G)
+
+    Auxiliar function used to enforce the nets' connectedness. It find out whether
+    there is a vertix in risk of been disconnected. If there is then ensures that 
+    it is not disconnected. 
+
+
+"""
+function validate_sort_edge(e, G)
+    a = src(e)
+    b = dst(e)
+    da = degree(G, a)
+    db = degree(G, b)
+
+    if da == 1 || db == 1
+        necessary = true 
+    else
+        necessary = false 
+    end
+
+    if necessary
+        if db == 1
+            keep = b
+            old = a 
+        elseif da == 1
+            keep = a 
+            old = a
+        else
+            error("da == db == 1 ???")
+        end
+    else 
+        keep = a 
+        old = b 
+    end 
+
+    return old, keep, necessary
+end
+
+
 """
     chopTopology(model)
 
