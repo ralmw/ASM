@@ -40,10 +40,16 @@ using DataFrames
 properties = validateProperties()
 properties[:n_agents] = 100
 properties[:modelTraining] = true
-contador = 0
+global globalTrainingCont = 1
+global globalTrainingPriceVector = [1,1,1,1,1,1,1,1,1,1]
+training_n = length(globalTrainingPriceVector)
 
+properties[:globalTrainingCont] = 1 
+properties[:globalTrainingPriceVector] = globalTrainingPriceVector
+
+# for training :
 model = initialize_model(properties, n_agents = 100)
-_ , mdf = run!(model, agent_step!, model_step!, 100; )
+_ , mdf = run!(model, agent_step!, model_step!, training_n; )
 
 agent = getindex(model, 39)
 d = agent.neighborhood

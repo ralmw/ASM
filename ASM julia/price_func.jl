@@ -181,23 +181,42 @@ function unzipTransactions(transactions,properties)
         end
     end
 
+    # Ahora que hemos desempaquetado la información del precio hay que 
+    # calcular los precios que cada agente observará, es aquí que se realiza 
+    # el entrenamiento con datos reales haciendo que los agentes observen 
+    # el precio de entrenamiento en lugar del ocurrido
+
     
     # ahora calculamos el diccionario de nuevos precios 
     PriceDict = Dict(0 => 0.0)
-    if properties[:priceType] == "local"
-        for i ∈ keys(TransDict)
-            PriceDict[i] = mean([TransDict[i][j][4] for j in 1:length(TransDict[i]) ] )
-        end
-        # Calculamos el promedio grobal 
-        PriceDict[0] = mean([PriceDict[j] for j in keys(PriceDict) ])
+    if properties[:modelTraining] == false # no queremos entrenar
+        if properties[:priceType] == "local"
+            for i ∈ keys(TransDict)
+                PriceDict[i] = mean([TransDict[i][j][4] for j in 1:length(TransDict[i]) ] )
+            end
+            # Calculamos el promedio grobal 
+            PriceDict[0] = mean([PriceDict[j] for j in keys(PriceDict) ])
 
-    elseif properties[:priceType] == "global" # Si solo hay un precio global
-        PriceDict[0] = mean([trans.Pt for trans in transactions])
-        for i ∈ 1:properties[:n_agents]
-            PriceDict[i] = PriceDict[0]
+        elseif properties[:priceType] == "global" # Si solo hay un precio global
+            PriceDict[0] = mean([trans.Pt for trans in transactions])
+            for i ∈ 1:properties[:n_agents]
+                PriceDict[i] = PriceDict[0]
+            end
         end
+    elseif properties[:modelTraining] == true # entrenamiento con datos reales
+        # los datos de entrenamiento se almacenan en properties
+        trainingPriceVector = properties[:globalTrainingPriceVector]
+        trainingCont = properties[:globalTrainingCont]
+        
+        for i in 1:properties[:n_agents]
+            # valor de entrenamiento
+            trainingPrice = trainingPriceVector[trainingCont]
+            PriceDict[i] = trainingPrice
+            
+            println(trainingPrice," ", trainingCont)
+        end
+        properties[:globalTrainingCont] += 1
     end
-
     # Ya que tenemos nuestros dos diccionarios para 
     # precios y transacciones los regresamos
     return TransDict, PriceDict
