@@ -117,6 +117,10 @@ function updateDescriptor!(P, des; simDiv=True, D = 1)
     end
     des.des = descriptor
     #return des
+
+    # Actualiza la varianza observada 
+    des.var = var(des.precios + des.dividendo)
+
     return
 
 end # function
@@ -126,6 +130,7 @@ mutable struct Descriptor
     dividendo
     des # corto de descriptor
     properties # el tipo de descriptor, LeBaron, Joshi, etc.
+    var # varianza observada del descriptor, del precio más dividendo
 end # mutable struct
 
 """
@@ -158,7 +163,10 @@ function initializeDescriptor(properties)
         descriptor = EhrentreichDesUpdate(precios, dividendo, properties)
     end
 
-    return Descriptor(precios, dividendo, descriptor, properties)
+    # Calculamos la varianza empírica del precio más el dividendo
+    empVar = var(precios + dividendo)
+
+    return Descriptor(precios, dividendo, descriptor, properties,empVar)
 end # function
 
 """

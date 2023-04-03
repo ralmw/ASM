@@ -51,6 +51,9 @@ properties[:globalTrainingPriceVector] = globalTrainingPriceVector
 model = initialize_model(properties, n_agents = 100)
 _ , mdf = run!(model, agent_step!, model_step!, training_n; )
 
+properties[:modelTraining] = false
+run!(model, agent_step!, model_step!, 100; )
+
 agent = getindex(model, 39)
 d = agent.neighborhood
 all_neighbors(G,39)

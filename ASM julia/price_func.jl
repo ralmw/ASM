@@ -100,7 +100,14 @@ function calcTransaction(agente1::Trader,agente2::Trader)
     up = PT*(S2 - S1) + S2*P2 - S1+P1 + (1+r)*(E2-E1)
     down =  2PT + P1 + P2 - 2*PT*(1+r)
 
-    x = up/down
+    λ = properties[:riskAversion]
+    σ1 = agente1.des.var 
+    σ2 = agente2.des.var 
+
+    x = up/down * 1/(λ*sqrt(σ1*σ2))
+
+    # 1/(λ*sqrt(σ1*σ2)) con la intención de hablar de una aversión al riesgo
+    # no bien fundamente matemáticamente pero similar a en el artículo original
 
     #la transación es entre pares, un comparador, un vendedor, a un precio y una cantidad x entre ellos. 
     # Para ello uso la struct Transaction
