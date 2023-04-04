@@ -41,8 +41,8 @@ end
 # Y esta es toda la información que necesito para la función.
 
 function calcTransaction(agente1::Trader,agente2::Trader)
-    a1,b1 = predict(agente1.reglas,agente1.des.des)
-    a2,b2 = predict(agente2.reglas,agente2.des.des)
+    a1,b1 = predict(agente1.reglas,agente1.des.des, agente1.properties)
+    a2,b2 = predict(agente2.reglas,agente2.des.des, agente2.properties)
 
     Pt1 = agente1.des.precios[end] # último precio del agente 1
     Pt2 = agente2.des.precios[end] # "" del agente 2

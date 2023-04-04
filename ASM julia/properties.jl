@@ -29,7 +29,8 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     :linkageBrakingMethod => "distribution", :baseLinkageBrakingProbability => 0.1,
     :linkageSpawningMethod => "distribution", :baseLinkageSpawningProbability => 0.5,
     :linkageRecommendationMethod => "random", :specialistType => "local",
-    :modelTraining => false, :WattsStrogatzAlgProbability => 0.01 )
+    :modelTraining => false, :WattsStrogatzAlgProbability => 0.01,
+    :perturbate => false, :perturbationFactor => 1.1 )
 
 # :activeDividend : true , false 
     # true, el dividendo es un proceso de Ornstein_Uhlenbeck

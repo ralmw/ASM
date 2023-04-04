@@ -212,6 +212,55 @@ function predict(reglas, des)
 end # function
 
 """
+    predict(reglas, des, properties)
+
+entrada: 
+    reglas : lista de reglas cómo las entrega createRules()
+    des : la parte des de des. Sólo el véctor des, no el descriptor completo 
+    properties : recibe el properties del agente 
+
+La predict sin properties del agente solo que perturbable. 
+si properties[:perturbate] == true 
+se perturba el predictor por un factor igual a properties[:perturbationFactor]
+la perturbación tiene la forma de una multiplicación 
+
+
+Esta función verifica si alguna de las reglas del agente se activan con
+el descriptor des dado.
+
+De las reglas que se activan escoge aquellas con el mejor fitness y regresa
+su predictor.
+
+Esta función también actualiza el último tiempo de activación de las reglas.
+"""
+function predict(reglas, des, properties)
+    activas = []
+    for i in eachindex(reglas)
+        # compareRule actualiza la información de la última activación
+        active = compareRule(reglas[i], des, properties)
+        if active
+            push!(activas, i)
+        end
+    end
+
+    if length(activas) == 0 # no hace nada si no hay reglas activas
+        #updateFitness()
+        return [0,0]
+    else
+        # selecciona a la mejor entre ellas, usando el fitness real
+        ind = argmax( x -> reglas[x].fitness.real, activas )
+    end
+
+
+    if properties[:perturbate]
+        return reglas[ind].predictor .* properties[:perturbationFactor]
+    else
+        return reglas[ind].predictor
+    end
+end # function
+
+
+"""
     compareRule(regla, des, properties)
 
 Esta función compara el descriptor con la regla dada, en caso de que la regla

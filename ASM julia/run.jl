@@ -1,19 +1,9 @@
 
 
 
-# inicialización
-model = initialize_model(properties, n_agents = 100)
-# recolección de datos
-getPrice(model) = model.properties.des.precios[end]
-getDividend(model) = model.properties.des.dividendo[end]
-mdata = [getPrice, getDividend]
-
-getAgentPrice(agent) = agent.des.precios[end]
-adata = [getAgentPrice]
 
 
-
-model = initialize_model(properties, n_agents = 100)
+model = initialize_model(properties)
 # corremos el modelo 1000 tiempos como fase transitoria
 _,_ = run!(model, agent_step!, model_step!, 100; )
 # recolectamos la información de los siguientes 10000 tiempos
@@ -37,6 +27,37 @@ using Graphs
 using Plots
 using DataFrames
 
+
+
+# El siguiente es un ejemplo de cómo debe ejecutarse el código para correr el modelo
+
+properties = validateProperties()
+properties[:n_agents] = 100
+
+properties[:modelTraining] = false
+run!(model, agent_step!, model_step!, 100; )
+
+# El siguiente es un ejemplo de cómo se recopila información del modelo 
+properties = validateProperties()
+properties[:n_agents] = 100
+
+# Se definen las función de recolección de datos
+getPrice(model) = model.properties.des.precios[end]
+getDividend(model) = model.properties.des.dividendo[end]
+mdata = [getPrice, getDividend]
+
+getAgentPrice(agent) = agent.des.precios[end]
+adata = [getAgentPrice]
+
+
+# inicialización
+model = initialize_model(properties)
+
+
+
+
+# El siguiente es un ejemplo dónde se entrena al modelo con datos externos 
+
 properties = validateProperties()
 properties[:n_agents] = 100
 properties[:modelTraining] = true
@@ -48,11 +69,9 @@ properties[:globalTrainingCont] = 1
 properties[:globalTrainingPriceVector] = globalTrainingPriceVector
 
 # for training :
-model = initialize_model(properties, n_agents = 100)
+model = initialize_model(properties)
 _ , mdf = run!(model, agent_step!, model_step!, training_n; )
 
-properties[:modelTraining] = false
-run!(model, agent_step!, model_step!, 100; )
 
 agent = getindex(model, 39)
 d = agent.neighborhood
@@ -62,6 +81,26 @@ length(all_neighbors(G,39))
 G = model.properties.graph
 nodelabels = 1:nv(G)
 gplot(G, nodelabel = nodelabels)
+
+
+# el siguiente es un ejemplo de cómo se perturba el modelo 
+
+properties = validateProperties()
+properties[:n_agents] = 100
+
+model = initialize_model(properties)
+percentageAgentsPerturbate = 0.2 # porcentaje de agentes a perturbar 
+perturbacionFactor = 2
+
+for agent in allagents(model)
+    if rand() < percentageAgentsPerturbate
+        agent.properties[:perturbate] = true 
+        agent.properties[:perturbacionFactor] = perturbacionFactor
+    end
+end
+
+# ahora se corre el modelo 
+_ , mdf = run!(model, agent_step!, model_step!, 100; )
 
 ###############################################################
 

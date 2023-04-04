@@ -31,7 +31,6 @@ mutable struct Trader <: AbstractAgent
 end # mutable struct
 
 function initialize_model(properties;
-    n_agents = 1000,
     dims = (20,20),
 )
 
@@ -47,7 +46,7 @@ function initialize_model(properties;
     )
     model = ABM(Trader, space; properties = prop, scheduler = Schedulers.randomly)
     id = 0
-    for _ in 1:n_agents
+    for _ in 1:properties[:n_agents]
         id += 1
         # aquí debo llenar los atributos de mis agentes
         reglas = createRules(properties)
