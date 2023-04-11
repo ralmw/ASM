@@ -37,6 +37,9 @@ properties[:n_agents] = 100
 properties[:modelTraining] = false
 run!(model, agent_step!, model_step!, 100; )
 
+
+
+
 # El siguiente es un ejemplo de cómo se recopila información del modelo 
 properties = validateProperties()
 properties[:n_agents] = 100
@@ -52,6 +55,10 @@ adata = [getAgentPrice]
 
 # inicialización
 model = initialize_model(properties)
+
+# recolectamos la información de los siguientes 10000 tiempos
+adf , mdf = run!(model, agent_step!, model_step!, 100; mdata,adata)
+
 
 
 
@@ -83,6 +90,10 @@ nodelabels = 1:nv(G)
 gplot(G, nodelabel = nodelabels)
 
 
+
+
+
+
 # el siguiente es un ejemplo de cómo se perturba el modelo 
 
 properties = validateProperties()
@@ -101,6 +112,37 @@ end
 
 # ahora se corre el modelo 
 _ , mdf = run!(model, agent_step!, model_step!, 100; )
+
+
+
+
+
+# el siguente es un ejemplo de ensemble run
+properties = validateProperties()
+properties[:n_agents] = 100
+
+# Se definen las función de recolección de datos
+getPrice(model) = model.properties.des.precios[end]
+getDividend(model) = model.properties.des.dividendo[end]
+mdata = [getPrice, getDividend]
+
+getAgentPrice(agent) = agent.des.precios[end]
+adata = [getAgentPrice]
+
+
+# inicialización
+models = []
+for i in 1:10
+    model = initialize_model(properties)
+    append!(models,[model])
+end
+models
+
+adf, mdf = ensemblerun!(models,agent_step!, model_step!, 100; mdata, adata)
+
+
+last(adf,10)
+last(mdf, 10)
 
 ###############################################################
 
