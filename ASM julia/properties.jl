@@ -17,7 +17,7 @@ export validateProperties
 
 
 properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
-    :maxPerCluster => 10, :nReglas => 100,
+    :maxPerCluster => 10, :nReglas => 100, :minPropReglas => 0.2,
     :minNumHijos => 20, :tamañoTorneo => 5,
     :interestRate => 0.001, :dividendMean => 1000, :activeDividend => true,
     :descriptor => 3,
@@ -31,6 +31,11 @@ properties = Dict( :nBitsReales => 1, :nBits => 7, :kClusters => 10,
     :linkageRecommendationMethod => "random", :specialistType => "local",
     :modelTraining => false, :WattsStrogatzAlgProbability => 0.01,
     :perturbate => false, :perturbationFactor => 1.1 )
+
+# :minPropReglas : float entre 0 y 1 
+    # indíca el número mínimo de reglas que puede tener una población por
+    # proporción, si son 100 reglas entonces reglas puede tener longitud mínima 
+    # de 20 
 
 # :activeDividend : true , false 
     # true, el dividendo es un proceso de Ornstein_Uhlenbeck

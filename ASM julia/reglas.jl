@@ -527,6 +527,12 @@ a las mejores reglas de todos los clusters.
 
 respetará a las mejores puediendo eliminar aquellas reglas cuyo fitness.scaled
 sea mayor a uno
+
+Elimina a los peores individuos de la población tomando en cuenta mil cosas. 
+Hace un escalamiento sigma para eliminar de todos los clusters haciendo un 
+escalamiento sigma, elimina las reglas que tiene mucho no se activan y 
+también toma en cuenta algo de elitismo, dónde procura no eliminar por 
+completo un cluster en particular a las mejores reglas de cada cluster.
 """
 
 function podaSigma(reglas, clusters, ct)
@@ -552,20 +558,29 @@ function podaSigma(reglas, clusters, ct)
     # sin importar en dónde se encuentren
     ind = []
     λ = properties[:gaActivationFrec]
-    for i in 1:length(reglas)
-        if λ*4 > reglas[i].lastActive >= λ*3 # podría ser 4
-            #proba
-            if rand(Bernoulli(0.5))
+    reglas_restantes = length(reglas)
+    min_reglas = Int(floor(properties[:minPropReglas] * properties[:nReglas]))
+
+    # cuantas reglas podemos eliminar todavía 
+    num_reglas_puedo_eliminar = reglas_restantes - min_reglas
+
+    for i in eachcol(reglas)
+        if num_reglas_puedo_eliminar > 0 # solo elimino si puedo 
+            if λ*5 > reglas[i].lastActive >= λ*4 # podría ser 4
+                #proba
+                if rand(Bernoulli(0.5))
+                    push!(ind, i)
+                end
+            elseif λ*6 > reglas[i].lastActive >= λ*5
+                #proba
+                if rand(Bernoulli(0.75))
+                    push!(ind, i)
+                end
+            elseif reglas[i].lastActive >= λ*6
+                # determinista
                 push!(ind, i)
             end
-        elseif λ*5 > reglas[i].lastActive >= λ*4
-            #proba
-            if rand(Bernoulli(0.75))
-                push!(ind, i)
-            end
-        elseif reglas[i].lastActive >= λ*5
-            # determinista
-            push!(ind, i)
+            num_reglas_puedo_eliminar -= 1
         end
     end
     deleteat!(reglas, ind)
@@ -601,8 +616,8 @@ function podaSigma(reglas, clusters, ct)
         end
         #i += 1 # el punto relevante para el elitismo ¿por qué?
 
-        reglas = reglas[ 1:max(ind, i) ] # y ya
-        ct = ct[1:max(ind, i)]
+        reglas = reglas[ 1:max(ind, i,min_reglas) ] # y ya
+        ct = ct[1:max(ind, i, min_reglas)]
 
     else
         # no hago nada pues ya tengo suficiente espacio

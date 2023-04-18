@@ -260,3 +260,20 @@ plot(p1,p2,layout=l)
 
 # Y si entendí correctamente el método para estimar el exponente de Hurst lo que necesito 
 # es ajustar una recta a los coeficientes de wavelet para que su pendiente sea el exponente.
+
+res
+
+using StatsBase, GLM
+
+# Obtener los logaritmos de los coeficientes de wavelet
+log_coefs = log.(abs.(res))
+
+# Calcular las escalas correspondientes a cada fila
+escalas = exp10.(collect(1:size(log_coefs, 2)))
+escalas = freqs
+
+# Realizar un análisis de regresión lineal para obtener la pendiente y el intercepto
+modelo = lm(log_coefs[:, end] .~ escalas .+ 1)
+
+# Obtener la pendiente, que corresponde al exponente de Hurst
+hurst_exponente = coef(modelo)[2]
