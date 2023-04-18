@@ -118,10 +118,6 @@ var(serie.retornos[2:end])
 skewness(serie.retornos[2:end])
 kurtosis(serie.retornos[2:end])
 
-# la siguiente es la entropía de kolmogorov
-using Snappy
-
-compress(serie.retornos[2:end])
 
 # como lo de kolmogorov se ve muy incómodo no lo quiero hacer, pasemos a la entropía de Shannon
 # Que es algo que perfectamente puedo hacer yo solito. 
@@ -145,25 +141,35 @@ using Distributions
 using StatsBase
 
 vect = [2,2,3,5,5,5,9]
-
 p = fit_mle(Categorical,vect)
 p
-
 # entropía de Shannon usando el logaritmo base e. Exactamente lo que yo quería :D 
 Distributions.entropy(p)
 
 
 # Ahora la cosa es sencilla. Debo redondar los valores de los precios de la manera deseada 
-
 vect = [22.2,25,35,56,53,57,98]
-
 vect = vect .÷ 10
-
 p = fit_mle(Categorical, vect)
-
 Distributions.entropy(p)
 
 # ya está calculada la entropía de un buen vector ejemplo
+
+"""
+calculatePredictionsShannonEntropy(predictions)
+
+predictions : el vector de predicciones hechas por los agentes 
+    sobre las cuales se desea calcular la entropía 
+
+    Redonda las predicciones a las decenas, ajusta una distribución de proba categórica
+    y luego calcula la entropía de Shannon para la distribución 
+
+"""
+function calculatePredictionsShannonEntropy(predictions)
+    roundPredictions = predictions .÷ 10
+    p = fit_mle(Categorical, roundPredictions) # ajusta un distribución de proba
+    return Distributions.entropy(p) # calcula la entropía de Shannon
+end
 
 
 

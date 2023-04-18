@@ -564,7 +564,7 @@ function podaSigma(reglas, clusters, ct)
     # cuantas reglas podemos eliminar todavía 
     num_reglas_puedo_eliminar = reglas_restantes - min_reglas
 
-    for i in eachcol(reglas)
+    for i in eachindex(reglas)
         if num_reglas_puedo_eliminar > 0 # solo elimino si puedo 
             if λ*5 > reglas[i].lastActive >= λ*4 # podría ser 4
                 #proba
@@ -682,7 +682,7 @@ Calcula la especificidad de las reglas y lo regresa en un vector
 function calcClustInfo(reglas, clusters)
     clustersInfo = zeros( length(clusters) )
 
-    for i in 1:length(clusters)
+    for i in eachindex(clusters)
         # calculate specificity of every cluster
         temp = zeros(Float64, length(clusters[i]) )
         cont = 1
@@ -714,7 +714,7 @@ function calculateProgeny(reglas, clusters)
     properties = reglas[1].properties
     hijos = []
     clustersInfo = calcClustInfo(reglas, clusters)
-    fitnessAve = mean([reglas[i].fitness.V for i in 1:length(reglas)])
+    fitnessAve = mean([reglas[i].fitness.V for i in eachindex(reglas)])
 
     while length(reglas) + length(hijos) < properties[:nReglas]
         # selecciona método de reproducción, mutación o cruza
@@ -783,7 +783,7 @@ de mutación adaptativo pero esta vez a nivel cluster.
 """
 function mutateConditional(cond, E)
     conditional = deepcopy(cond)
-    for i in 1:length(conditional)
+    for i in eachindex(conditional)
         if rand( Bernoulli(2/length(conditional) ) )
             # muta el bit
             if conditional[i] == 0
@@ -837,7 +837,7 @@ function mutateReals(realCond)
     ub = 1.25
 
     # dado que serán pocos bits preguntaré uno por uno
-    for i in 1:length(realConditional)
+    for i in eachindex(realConditional)
         if rand(Bernoulli(1/length(realConditional)))
             # muta
             v = realConditional[i]
@@ -940,7 +940,7 @@ Realiza la cruza uniforme de la parte condicional
 function uniformCrossover(cond1, cond2)
     condHijo = zeros(Int8, length( cond1 ))
 
-    for i in 1:length(cond1)
+    for i in eachindex(cond1)
         if rand(Bernoulli())
             condHijo[i] = cond1[i]
         else
