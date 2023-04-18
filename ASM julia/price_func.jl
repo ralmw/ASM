@@ -54,6 +54,9 @@ function calcTransaction(agente1::Trader,agente2::Trader)
     P1 = a1*(Pt1 + Dt) + b1 # predicción del agente 1
     P2 = a2*(Pt2 + Dt) + b2 # precio predicho por el agente 2
 
+    agente1.prediction = P1 # guardamos la prediccion de los agentes para poder monitorearla 
+    agente2.prediction = P2
+
     # Y ahora toca tomar el precio de acuerdo con el criterio seleccionado, ya sea 
     # justo a la mitad a proporcional a la riqueza de los agentes.
 

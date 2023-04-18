@@ -41,6 +41,7 @@ run!(model, agent_step!, model_step!, 100; )
 
 
 # El siguiente es un ejemplo de cómo se recopila información del modelo 
+
 properties = validateProperties()
 properties[:n_agents] = 100
 
@@ -118,6 +119,7 @@ _ , mdf = run!(model, agent_step!, model_step!, 100; )
 
 
 # el siguente es un ejemplo de ensemble run
+
 properties = validateProperties()
 properties[:n_agents] = 100
 
@@ -127,18 +129,19 @@ getDividend(model) = model.properties.des.dividendo[end]
 mdata = [getPrice, getDividend]
 
 getAgentPrice(agent) = agent.des.precios[end]
-adata = [getAgentPrice]
+getAgentPrediction(agent) = agent.prediction
+adata = [getAgentPrice, getAgentPrediction]
 
 
 # inicialización
 models = []
-for i in 1:10
+for i in 1:4
     model = initialize_model(properties)
     append!(models,[model])
 end
 models
 
-adf, mdf = ensemblerun!(models,agent_step!, model_step!, 100; mdata, adata)
+adf, mdf = ensemblerun!(models,agent_step!, model_step!, 4000; mdata, adata)
 
 
 last(adf,10)

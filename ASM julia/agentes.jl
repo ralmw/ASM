@@ -28,6 +28,7 @@ mutable struct Trader <: AbstractAgent
     GA_time::Int # when 0 it is time to execute the GA alg
     des
     neighborhood::Dict # Se almacena si el vínculo con el vecino es beneficioso 
+    prediction::Float64
 end # mutable struct
 
 function initialize_model(properties;
@@ -52,7 +53,7 @@ function initialize_model(properties;
         reglas = createRules(properties)
         time = floor(Int,rand(Exponential(properties[:gaActivationFrec])))
         agent = Trader(id, (0,0), Wealth(10000.0, properties[:initStock]), reglas, properties, time,
-            initializeDescriptor(properties), Dict(0 => 0.0) )
+            initializeDescriptor(properties), Dict(0 => 0.0), 0.0 )
         add_agent!(agent, model)
     end
 
