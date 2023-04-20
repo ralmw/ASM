@@ -12,6 +12,10 @@ pruebas.jl
 last(adf,10)
 last(mdf,10)
 
+using Distributions
+using StatsBase
+using GLM
+
 # Me hará falta una función que una los diferentes dataframes de las diferentes ejecuciones, el 
 # tiempo se pierde en cada una de las ejecuciones. Crearé primero una corrida de ejemplo para
 # programar lo que quiero. 
@@ -135,93 +139,36 @@ entropy_wavelet(adf.getAgentPrediction)
 filter(:step => x -> x == 100, adf)
 
 
-# Aquí mi experimento para calcular la entropia
+# Aquí la función para calcular la entropía sobre las predicciones
 
 using Distributions
 using StatsBase
 
-vect = [2,2,3,5,5,5,9]
-p = fit_mle(Categorical,vect)
-p
-# entropía de Shannon usando el logaritmo base e. Exactamente lo que yo quería :D 
-Distributions.entropy(p)
-
-
-# Ahora la cosa es sencilla. Debo redondar los valores de los precios de la manera deseada 
-vect = [22.2,25,35,56,53,57,98]
-vect = vect .÷ 10
-p = fit_mle(Categorical, vect)
-Distributions.entropy(p)
-
-# ya está calculada la entropía de un buen vector ejemplo
-
 """
 calculatePredictionsShannonEntropy(predictions)
 
-predictions : el vector de predicciones hechas por los agentes 
+    predictions : el vector de predicciones hechas por los agentes 
     sobre las cuales se desea calcular la entropía 
 
     Redonda las predicciones a las decenas, ajusta una distribución de proba categórica
     y luego calcula la entropía de Shannon para la distribución 
 
 """
-function calculatePredictionsShannonEntropy(predictions)
-    roundPredictions = predictions .÷ 10
-    p = fit_mle(Categorical, roundPredictions) # ajusta un distribución de proba
+function calculatePredictionsShannonEntropy(vect)
+    println("entrada: ",vect)
+
+    vect = floor.(vect ./ 10)
+    println("redondeo: ",vect)
+
+    p = fit_mle(Categorical, vect)
+    println(p) # ajusta un distribución de proba
+
     return Distributions.entropy(p) # calcula la entropía de Shannon
 end
 
 
 
 # Lo siguiente es sobre Hurst y Wavelet 
-
-using Wavelets
-using Plots
-
-function wavelet_spectrogram(signal::Vector)
-    # Aplicar la transformada de wavelet y obtener los coeficientes de detalle
-    coeffs = dwt(signal, wavelet(WT.db4))
-    details = coeffs[1:end-1]
-
-    # para no anular el cociente
-    n = log(length(signal)-1,2)
-    
-    # Crear un vector de escalas y un vector de tiempos
-    scales = [length(signal) ÷ 2^i for i in 0:n]
-    times = [i ÷ BigInt(2)^n for i in 1:length(signal)]
-    
-    # Calcular el espectrograma de wavelet y graficarlo
-    heatmap(times, scales, abs.(details'), yscale=:log10, c=:viridis, xlabel="Time", ylabel="Scale", title="Wavelet Spectrogram")
-end
-
-# Generar una serie de tiempo aleatoria
-signal = randn(1024)
-
-# Generar el espectrograma de wavelet
-wavelet_spectrogram(signal)
-
-
-######### 
-coeffs = dwt(signal, wavelet(WT.db4))
-details = coeffs[1:end-1]
-
-scales = [length(signal) ÷ BigInt(2)^i for i in 0:(length(details)-1)]
-
-0:(length(details)-1)
-length(details)-1
-
-for i in 0:8
-    print(BigInt(2)^i, " ")
-end
-
-scales
-
-
-
-
-
-
-
 
 
 ##### Aquí es dónde pruebo continuous wavelets 
@@ -283,3 +230,117 @@ modelo = lm(log_coefs[:, end] .~ escalas .+ 1)
 
 # Obtener la pendiente, que corresponde al exponente de Hurst
 hurst_exponente = coef(modelo)[2]
+
+
+# Según chatGPT está bien pendejo.
+
+"""
+hurst_exponent()
+"""
+function hurst_exponendt(serie)
+    n = length(serie)
+    media = mean(serie)
+    serie_m = serie .- media
+
+    serie_cum = cumsum(serie_m)
+end
+
+serie
+
+ave_rescaled_ranges, scales = calcAveRescaledRanges(serie)
+
+using Plots
+
+plot(scales, ave_rescaled_ranges)
+
+# ahora me hace falta calcula el logaritmo de ave_rescaled_ranges
+log_coefs = log2.(ave_rescaled_ranges)
+
+plot(scales, log_ave_rescaled_ranges)
+# Que ahora sí se ve cómo una línea, solo resta ajustarle una recta 
+
+
+modelo = lm(log_coefs[:, end] .~ scales .+ 1)
+
+# Obtener la pendiente, que corresponde al exponente de Hurst
+hurst_exponente = coef(modelo)[2]
+
+
+
+"""
+calcAveRescaledRanges(serie)
+
+serie: serie de tiempo
+
+calcula los rangos reescalados (Rescaled Ranges) de las diferentes subseries 
+de longitudes iguales a potencias de 2 que caben en el vector y calcula el 
+promedio por potencia de 2  
+"""
+function calcAveRescaledRanges(serie; init_k = 2)
+
+    # Ahora, para cada k potencia de 2 que quepan en n 
+    # para todas las las subseries de longitud k 
+
+    # calculamos las diferentes potencias posibles 
+    scales = Float64[]
+    ave_rescaled_ranges = Float64[]
+    for k in init_k:floor(Int,log2(n))
+        # y todos los diferentes intervalos de esa longitud 
+        #k = 7
+        #2^k
+
+        max_cont = floor(Int,n / (2^k))
+        cont = 0
+        rescaled_ranges = Float64[]
+        while (cont) * 2^k < n 
+            if cont == 0
+                rango = 1:(2^k)
+            elseif cont == max_cont
+                rango = (n-2^k):n
+            else
+                rango = (2^k*cont):(2^k*(cont+1))
+            end
+
+            subserie = serie[rango]
+            rescaled_range = calcRescaledRange(subserie)
+            append!(rescaled_ranges, rescaled_range)
+
+            cont += 1
+        end
+        rescaled_ranges
+
+        #std(rescaled_ranges)
+        ave_rescaled_range = mean(rescaled_ranges)
+
+        append!(scales,k)
+        append!(ave_rescaled_ranges,ave_rescaled_range)
+    end
+    return ave_rescaled_ranges, scales
+end
+"""
+calcRescaledRange(serie)
+
+calcula el rango reescalado de una subserie, se usa para calcular el 
+exponente de Hurst 
+"""
+function calcRescaledRange(serie)
+    media = mean(serie)
+    serie_m = serie .- media
+
+    serie_cum = cumsum(serie_m)
+
+    # Ahora calculo el rango 
+    range = maximum(serie_cum) - minimum(serie_cum)
+
+    # y su desviación estandar
+    stdd = std(serie)
+
+    rescaled_range = range / stdd
+    return rescaled_range
+end
+    
+
+serie = serie.getPrice
+
+calcRescaledRange(serie)
+
