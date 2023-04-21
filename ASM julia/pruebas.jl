@@ -245,27 +245,142 @@ function hurst_exponendt(serie)
     serie_cum = cumsum(serie_m)
 end
 
+
+# aqui otro ejemplo de Hurst 
+
+ave_rescaled_ranges, scales = calcAveRescaledRanges([0.04,0.02,0.05,0.08,0.02,-0.17,0.05,0]; init_k = 1)
+
+
+
+
+
+###### Aquí calculo el coeficiente de Hurst
+
 serie
 
-ave_rescaled_ranges, scales = calcAveRescaledRanges(serie)
-
+ave_rescaled_ranges, scales = calcAveRescaledRanges(serie.getPrice;base = 2)
 using Plots
-
 plot(scales, ave_rescaled_ranges)
-
 # ahora me hace falta calcula el logaritmo de ave_rescaled_ranges
 log_coefs = log2.(ave_rescaled_ranges)
-
-plot(scales, log_ave_rescaled_ranges)
+plot(scales, log_coefs)
 # Que ahora sí se ve cómo una línea, solo resta ajustarle una recta 
+data = DataFrame(scales = scales, log_coefs = log_coefs)
 
-
-modelo = lm(log_coefs[:, end] .~ scales .+ 1)
+modelo = lm(@formula(log_coefs ~ scales), data )
 
 # Obtener la pendiente, que corresponde al exponente de Hurst
 hurst_exponente = coef(modelo)[2]
 
 
+ave_rescaled_ranges[13]
+
+log2(6845)
+
+using CSV
+serie
+CSV.write("serie.csv",serie)
+
+
+
+
+
+
+
+
+# debugging        ##########
+serie = [0.04,0.02,0.05,0.08,0.02,-0.17,0.05,0]
+base = 2
+init_k = 1
+# calculamos las diferentes potencias posibles 
+n = length(serie)
+scales = Float64[]
+ave_rescaled_ranges = Float64[]
+for k in init_k:floor(Int,log(base,n))
+    # y todos los diferentes intervalos de esa longitud 
+    #k = 7
+    #2^k
+
+    max_cont = floor(Int,n / (base^k))
+    cont = 0
+    rescaled_ranges = Float64[]
+    while (cont) * base^k < n 
+        if cont == 0
+            rango = 1:(base^k)
+        elseif cont == max_cont
+            rango = (n-base^k+1):n
+        else
+            rango = (base^k*cont):(base^k*(cont+1)-1)
+        end
+
+        subserie = serie[rango]
+        rescaled_range = calcRescaledRange(subserie)
+        append!(rescaled_ranges, rescaled_range)
+
+        cont += 1
+    end
+    rescaled_ranges
+
+    #std(rescaled_ranges)
+    ave_rescaled_range = mean(rescaled_ranges)
+
+    append!(scales,k)
+    append!(ave_rescaled_ranges,ave_rescaled_range)
+end
+return ave_rescaled_ranges, scales
+
+
+
+
+
+
+# más debugging 
+
+# y todos los diferentes intervalos de esa longitud 
+k = 3
+#2^k
+
+max_cont = floor(Int,n / (base^k))
+cont = 0
+rescaled_ranges = Float64[]
+ranges = Float64[]
+stds = Float64[]
+while (cont) * base^k < n 
+    if cont == 0
+        rango = 1:(base^k)
+    elseif cont == max_cont
+        rango = (n-base^k+1):n
+    else
+        rango = (base^k*cont):(base^k*(cont+1)-1)
+    end
+
+    subserie = serie[rango]
+    rescaled_range, range, stdd = calcRescaledRange(subserie; complete = true)
+    append!(rescaled_ranges, rescaled_range)
+    append!(ranges, range)
+    append!(stds, stdd)
+
+    cont += 1
+end
+rescaled_ranges
+ranges
+stds
+
+
+
+######     Ayuda para mis cálculos a mano 
+
+serie = [0.04,0.02,0.05,0.08,0.02,-0.17,0.05,0]
+
+mean(serie)
+std(serie,corrected=false)
+
+acumu = cumsum(serie .- mean(serie))
+
+
+rango = maximum(acumu) - minimum(acumu)
+
+rango/std(serie,corrected=false)
 
 """
 calcAveRescaledRanges(serie)
@@ -276,29 +391,30 @@ calcula los rangos reescalados (Rescaled Ranges) de las diferentes subseries
 de longitudes iguales a potencias de 2 que caben en el vector y calcula el 
 promedio por potencia de 2  
 """
-function calcAveRescaledRanges(serie; init_k = 2)
+function calcAveRescaledRanges(serie; init_k = 2, base = 2)
 
     # Ahora, para cada k potencia de 2 que quepan en n 
     # para todas las las subseries de longitud k 
 
     # calculamos las diferentes potencias posibles 
+    n = length(serie)
     scales = Float64[]
     ave_rescaled_ranges = Float64[]
-    for k in init_k:floor(Int,log2(n))
+    for k in init_k:floor(Int,log(base,n))
         # y todos los diferentes intervalos de esa longitud 
         #k = 7
         #2^k
 
-        max_cont = floor(Int,n / (2^k))
+        max_cont = floor(Int,n / (base^k))
         cont = 0
         rescaled_ranges = Float64[]
-        while (cont) * 2^k < n 
+        while (cont) * base^k < n 
             if cont == 0
-                rango = 1:(2^k)
+                rango = 1:(base^k)
             elseif cont == max_cont
-                rango = (n-2^k):n
+                rango = (n-base^k+1):n
             else
-                rango = (2^k*cont):(2^k*(cont+1))
+                rango = (base^k*cont):(base^k*(cont+1)-1)
             end
 
             subserie = serie[rango]
@@ -323,7 +439,7 @@ calcRescaledRange(serie)
 calcula el rango reescalado de una subserie, se usa para calcular el 
 exponente de Hurst 
 """
-function calcRescaledRange(serie)
+function calcRescaledRange(serie; complete = false)
     media = mean(serie)
     serie_m = serie .- media
 
@@ -332,15 +448,15 @@ function calcRescaledRange(serie)
     # Ahora calculo el rango 
     range = maximum(serie_cum) - minimum(serie_cum)
 
-    # y su desviación estandar
-    stdd = std(serie)
+    # y la desviación estandar de la serie original
+    stdd = std(serie,corrected = false)
 
     rescaled_range = range / stdd
-    return rescaled_range
+
+    if complete 
+        return rescaled_range, range, stdd
+    else
+        return rescaled_range
+    end
 end
     
-
-serie = serie.getPrice
-
-calcRescaledRange(serie)
-
