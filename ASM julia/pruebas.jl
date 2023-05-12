@@ -168,6 +168,11 @@ end
 
 
 
+
+
+
+
+
 # Lo siguiente es sobre Hurst y Wavelet 
 
 
@@ -176,19 +181,9 @@ end
 using ContinuousWavelets, Plots, Wavelets
 
 n = 2047;
-
 t = range(0, n / 1000, length=n) # 1kHz sampling rate
-
 f = testfunction(n, "Doppler")
-
 length(t)
-
-
-# mis datos 
-f = series[1].getPrice
-t = range(0, length(f) / 1000, length=length(f))
-length(t)
-
 p1 = plot(t, f, legend=false, title="Doppler", xticks=false)
 
 c = wavelet(Morlet(π), β=2)
@@ -198,23 +193,159 @@ size(res)
 length(t)
 length(freqs)
 
-
 freqs = getMeanFreq(ContinuousWavelets.computeWavelets(length(f), c)[1])
-freqs[1] = 0
+
 p2 = heatmap(t, freqs, log.(abs.(res).^2)', xlabel= "time (s)", ylabel="frequency (Hz)", colorbar=false, c=cgrad(:viridis, scale=:log10))
 l = @layout [a{.3h};b{.7h}]
 plot(p1,p2,layout=l)
 
-# Bueno, ya que está esto tengo mucho que comprender todavía. Pero si entiendo correctamente
-# el resultado de ContinuousWavelets.cwt es una matriz con num columnas igual a la del vector 
-# alimentado y con tantas filas como frecuencias fue posible calcular. Entonces acada tiempo 
-# tengo un coeficiente que se corresponde con la frecuencia de la que se esté calculando
-# aunque no sé qué determina cuántas frecuencias son calculadas
+Wavelets.maxtransformlevels(zeros(2048))
 
-# Y si entendí correctamente el método para estimar el exponente de Hurst lo que necesito 
-# es ajustar una recta a los coeficientes de wavelet para que su pendiente sea el exponente.
+f
+# Y ahora haré exactamente lo mismo pero para mi serie 
 
-res
+# mis datos 
+f = series[1].getPrice
+t = range(0, length(f) / 1000, length=length(f))
+n = length(t)
+p1 = plot(t, f, legend=false, title="Market series", xticks=false)
+
+c = wavelet(Morlet(π), β=2)
+
+res = ContinuousWavelets.cwt(f, c)
+size(res)
+length(t)
+length(freqs)
+
+freqs = getMeanFreq(ContinuousWavelets.computeWavelets(length(f), c)[1])
+
+p2 = heatmap(t, freqs, log.(abs.(res).^2)', xlabel= "time (s)", ylabel="frequency (Hz)", colorbar=false, c=cgrad(:viridis, scale=:log10))
+l = @layout [a{.3h};b{.7h}]
+plot(p1,p2,layout=l)
+
+
+
+
+
+using Wavelets
+using Plots
+
+# Generamos una señal de ejemplo
+x = randn(1024)
+
+# Calculamos la transformada wavelet usando el filtro Daubechies 4
+cfs = dwt(x, wavelet(WT.db2))
+
+# Obtenemos los coeficientes y las escalas a graficar
+d, l = wplotdots(cfs)
+
+# Graficamos los coeficientes vs las escalas
+scatter(d, l, xlabel="Escala", ylabel="Coeficiente", markersize=2)
+
+d
+l
+
+
+cfs
+
+a
+b
+
+
+
+
+using Wavelets
+
+t = 0:0.01:10
+y = sin.(2π*t) + 0.2*randn(length(t))
+
+scales = 1:0.1:100
+coef, freqs, dt, dj, sj = cwt(y, scales, "morlet")
+
+
+
+
+
+# Esta es una comparación con FFT
+
+using FFTW
+
+# Generamos una señal de ejemplo
+N = 1024 # Longitud de la señal
+T = 1.0 # Duración de la señal
+t = range(0, T, length=N)
+f1 = 10 # Frecuencia de la señal
+f2 = 20 # Frecuencia de la señal
+s = sin.(2π*f1*t) + 0.5sin.(2π*f2*t)
+
+# Calculamos la transformada rápida de Fourier de la señal
+s_fft = fft(s)
+
+# Calculamos las escalas de frecuencia correspondientes
+fs = 1 / T # Frecuencia de muestreo
+freqs = fftfreq(N, fs)
+
+# Obtenemos los coeficientes y las escalas de la señal
+coefs = abs.(s_fft)
+scales = 1 ./ freqs
+
+plot(coefs)
+
+# Graficamos los coeficientes en función de las escalas
+using Plots
+scatter(scales, coefs, xscale=:log10, yscale=:log10, xlabel="Scale (Hz)", ylabel="Coefficient")
+
+
+
+# Number of points 
+N = 2^14 - 1 
+# Sample period
+Ts = 1 / (1.1 * N) 
+# Start time 
+t0 = 0 
+tmax = t0 + N * Ts
+# time coordinate
+t = t0:Ts:tmax
+
+# signal 
+signal = sin.(2π * 60 .* t) # sin (2π f t) 
+
+# Fourier Transform of it 
+F = fft(signal) |> fftshift
+freqs = fftfreq(length(t), 1.0/Ts) |> fftshift
+
+# plots 
+time_domain = plot(t, signal, title = "Signal")
+freq_domain = plot(freqs, abs.(F), title = "Spectrum", xlim=(-1000, +1000)) 
+plot(time_domain, freq_domain, layout = 2)
+
+
+# Ahora si quiero hacer lo mismo pero para mis datos haré lo siguiente
+series
+serie = series[1].getPrice
+
+# Número de puntos
+N = length(serie) - 1
+
+# Periodo de muestreo 
+Ts = 1/(N)
+
+# Tiempo de inicio, final y rango de tiempo
+t0 = 0 
+tmax = t0 + Ts*N
+t = t0:Ts:tmax
+
+# señal 
+signal = serie
+
+# Trasformada de Fourier de la señal 
+F = fft(signal)
+freqs = fftfreq(length(t), 1.0/Ts)
+
+# Graficamos 
+time_domain = plot(t,signal, title = "Serie de tiempo")
+freq_domain = plot(freqs, abs.(F), title = "Spectro",ylim = (0,20000) )
+
 
 using StatsBase, GLM
 
@@ -282,105 +413,43 @@ serie
 CSV.write("serie.csv",serie)
 
 
+# El siguiente paso es simular un movimiento browniano y ver qué coeficiente de Hurst le asigna. 
 
+brownian = [0.0]
+for i in 2:10000
+    ϵ = rand(Normal(0,1))
+    append!(brownian, brownian[i-1] + ϵ)
+end
+brownian 
+plot(1:10000,brownian)
 
+randomWalk = [0]
+for i in 2:10000
+    step = rand(Bernoulli(0.5))
+    if step == 0
+        step = -1
+    end
+    append!(randomWalk,randomWalk[i-1]+step)
+end
+plot(1:10000,randomWalk)
 
-
-
-
-# debugging        ##########
-serie = [0.04,0.02,0.05,0.08,0.02,-0.17,0.05,0]
 base = 2
-init_k = 1
-# calculamos las diferentes potencias posibles 
-n = length(serie)
-scales = Float64[]
-ave_rescaled_ranges = Float64[]
-for k in init_k:floor(Int,log(base,n))
-    # y todos los diferentes intervalos de esa longitud 
-    #k = 7
-    #2^k
+ave_rescaled_ranges, scales = calcAveRescaledRanges(brownian; base = base)
 
-    max_cont = floor(Int,n / (base^k))
-    cont = 0
-    rescaled_ranges = Float64[]
-    while (cont) * base^k < n 
-        if cont == 0
-            rango = 1:(base^k)
-        elseif cont == max_cont
-            rango = (n-base^k+1):n
-        else
-            rango = (base^k*cont):(base^k*(cont+1)-1)
-        end
+# Y ahora calculamos el exponente de Hurst 
 
-        subserie = serie[rango]
-        rescaled_range = calcRescaledRange(subserie)
-        append!(rescaled_ranges, rescaled_range)
-
-        cont += 1
-    end
-    rescaled_ranges
-
-    #std(rescaled_ranges)
-    ave_rescaled_range = mean(rescaled_ranges)
-
-    append!(scales,k)
-    append!(ave_rescaled_ranges,ave_rescaled_range)
-end
-return ave_rescaled_ranges, scales
-
-
-
-
-
-
-# más debugging 
-
-# y todos los diferentes intervalos de esa longitud 
-k = 3
-#2^k
-
-max_cont = floor(Int,n / (base^k))
-cont = 0
-rescaled_ranges = Float64[]
-ranges = Float64[]
-stds = Float64[]
-while (cont) * base^k < n 
-    if cont == 0
-        rango = 1:(base^k)
-    elseif cont == max_cont
-        rango = (n-base^k+1):n
-    else
-        rango = (base^k*cont):(base^k*(cont+1)-1)
-    end
-
-    subserie = serie[rango]
-    rescaled_range, range, stdd = calcRescaledRange(subserie; complete = true)
-    append!(rescaled_ranges, rescaled_range)
-    append!(ranges, range)
-    append!(stds, stdd)
-
-    cont += 1
-end
-rescaled_ranges
-ranges
-stds
-
-
+plot(scales, ave_rescaled_ranges)
+# ahora me hace falta calcula el logaritmo de ave_rescaled_ranges
+log_coefs = log.(base, ave_rescaled_ranges)
+plot(scales, log_coefs)
+# Que ahora sí se ve cómo una línea, solo resta ajustarle una recta 
+data = DataFrame(scales = scales, log_coefs = log_coefs)
+using GLM
+modelo = lm(@formula(log_coefs ~ scales), data )
+hurst_exponente = coef(modelo)[2]
 
 ######     Ayuda para mis cálculos a mano 
 
-serie = [0.04,0.02,0.05,0.08,0.02,-0.17,0.05,0]
-
-mean(serie)
-std(serie,corrected=false)
-
-acumu = cumsum(serie .- mean(serie))
-
-
-rango = maximum(acumu) - minimum(acumu)
-
-rango/std(serie,corrected=false)
 
 """
 calcAveRescaledRanges(serie)

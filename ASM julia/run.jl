@@ -135,13 +135,13 @@ adata = [getAgentPrice, getAgentPrediction]
 
 # inicialización
 models = []
-for i in 1:4
+for i in 1:2
     model = initialize_model(properties)
     append!(models,[model])
 end
 models
 
-adf, mdf = ensemblerun!(models,agent_step!, model_step!, 20000; mdata, adata)
+adf, mdf = ensemblerun!(models,agent_step!, model_step!, 1000; mdata, adata)
 
 
 last(adf,10)
