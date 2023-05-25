@@ -124,8 +124,8 @@ properties = validateProperties()
 properties[:n_agents] = 100
 
 # Se definen las función de recolección de datos
-getPrice(model) = model.properties.des.precios[end]
-getDividend(model) = model.properties.des.dividendo[end]
+price(model) = model.properties.des.precios[end]
+dividend(model) = model.properties.des.dividendo[end]
 mdata = [getPrice, getDividend]
 
 getAgentPrice(agent) = agent.des.precios[end]
@@ -141,7 +141,7 @@ for i in 1:2
 end
 models
 
-adf, mdf = ensemblerun!(models,agent_step!, model_step!, 1000; mdata, adata)
+adf, mdf = ensemblerun!(models,agent_step!, model_step!, 10000; mdata, adata)
 
 
 last(adf,10)

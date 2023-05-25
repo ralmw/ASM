@@ -1,119 +1,111 @@
-
-
-# A continuación el ejemplo de uso que encontré 
-
-using FFTW
-
-N = 10
-fftfreq(N,N)
-
-N = 11 
-
-fftfreq(N,N)
-
-using FFTW 
-using Plots
-
-N = 21 
-xj = (0:N-1)*2*π/N 
-f = 2*exp.(17*im*xj) + 3*exp.(6*im*xj) + rand(N)
-
-original_k = 1:N 
-shifted_k = fftshift(fftfreq(N)*N)
-
-original_fft = fft(f)
-shifted_fft= fftshift(fft(f))
-
-p1 = plot(original_k,abs.(original_fft),title="Original FFT Coefficients", xticks=original_k[1:2:end], legend=false, ylims=(0,70));
-p1 = plot!([1,7,18],abs.(original_fft[[1,7,18]]),markershape=:circle,markersize=6,linecolor="white");
-p2 = plot(shifted_k,abs.(shifted_fft),title="Shifted FFT Coefficients",xticks=shifted_k[1:2:end], legend=false, ylims=(0,70));
-p2 = plot!([-4,0,6],abs.(shifted_fft[[7,11,17]]),markershape=:circle,markersize=6,linecolor="white");
-plot(p1,p2,layout=(2,1))
-
-
-
-# Aplicado ahora a un seno 
-
-
 using FFTW 
 using Plots 
 
-t0 = 0 
-fs = 44100 
-tmax = 0.1 
 
-t = t0:1/fs:tmax; 
-signal = sin.(2π * 60 .* t)
+## Con mis datos
+serie = series[2]
+serie = serie.getPrice
+plot(serie)
+FFT_log_adj_plot(serie)
 
-F = fftshift(fft(signal))
-freqs = fftshift(fftfreq(length(t), fs))
+FFT_log_adj_plot(brownian)
+FFT_log_adj_coef(brownian)
 
-# plots 
-time_domain = plot(t, signal, title = "Signal", label='f',legend=:top)
-freq_domain = plot(freqs, abs.(F), title = "Spectrum", xlim=(-100, +100), xticks=-100:20:100, label="abs.(F)",legend=:top) 
-plot(time_domain, freq_domain, layout = (2,1))
+FFT_log_adj_plot(randomWalk)
+FFT_log_adj_coef(randomWalk)
 
 
+#### Pink Noise
+using CSV, DataFrames, FFTW, Plots, GLM
 
-# Para mis fines puedo fijar una frecuencia cualquiera y el 
-# resultado deberá ser el mismo. Podré pues una frecuencia
-# de 44100 igual que en el ejemplo 
+df = CSV.read("Pink_Noise.csv",DataFrame, header=false)
+vect = df.Column1
 
-serie = series[1].getPrice
+FFT_log_adj_coef(vect)
+FFT_log_adj_plot(vect)
 
-t0 = 0 
-fs = 1200
-tmax = 1/fs * length(serie)
-
-t = t0:1/fs:tmax 
-t = t[1:end-1]
-signal = serie .- mean(serie)
-
-F = fftshift( fft( signal))
-freqs = fftshift( fftfreq(length(t), fs))
+FFT_log_adj_coef(serie)
+FFT_log_adj_plot(serie)
 
 
-# plots 
-time_domain = plot(t, signal, title = "Signal", label='f',legend=:top)
-freq_domain = plot(freqs, abs.(F), title = "Spectrum", xlim=(-100, +100), xticks=-100:20:100, label="abs.(F)",legend=:top) 
-plot(time_domain, freq_domain, layout = (2,1))
+"""
+FFT_log_adj_coef(serie)
 
+serie: serie de tiempo a la que se calculará el exponente
 
-# Ahora, si quiero graficar coeficiente contra escala 
-# me quedo con las escalas positivas 
+No calcula todavía cómo tal el exponente, calcula la pendiente de la recta ajustada 
+al logaritmo del espectrograma del a transformada de Fourier de la serie.
+"""
+function FFT_log_adj_coef(serie)
+    # Cómo se ve la serie
+    #plot(serie)
 
-pos_freqs = freqs[freqs .> 0.0]
-pos_F = abs.(F[freqs .> 0.0])
+    # Calcula la FFT
+    Y = fft(serie)
 
-plot(pos_freqs,pos_F)
+    # Visualizar los coeficientes en el espacio de frecuencias
+    n = length(serie)
+    frequencies = fftfreq(n,100)
+    magnitudes = abs.(Y)
+    #plot(frequencies, magnitudes, xlabel="Frecuencia", ylabel="Magnitud", legend=false)
 
+    # Nos quedamos con las correspondientes a frecuencias positivas
+    freqs = frequencies[2:floor(Int,length(frequencies)/2)]
+    mags = magnitudes[2:floor(Int,length(frequencies)/2)]
 
+    #plot(freqs, mags)
+    #plot(log.(freqs), log.(mags))
 
+    # Y ajustamos la recta
+        
+    # Que ahora sí se ve cómo una línea, solo resta ajustarle una recta 
+    data = DataFrame(log_scales = log.(freqs), log_mags = log.(mags))
 
+    modelo = lm(@formula(log_mags ~ log_scales), data )
 
-
-
-
-
-function hurst_fft(x)
-    # Calculate the FFT of the time series
-    fft_x = fft(x)
-  
-    # Calculate the magnitudes of the FFT coefficients
-    magnitudes = abs.(fft_x)
-  
-    # Calculate the Hurst exponent
-    H = mean(log.(magnitudes[2:end]) ./ log.(magnitudes[1:end-1]))
-  
-    return H
-  end
-  
-
-  hurst_fft(signal)
-
-brownian = [0.0]
-for i in 2:2^12
-    ϵ = rand(Normal(0,1))
-    append!(brownian, brownian[i-1] + ϵ)
+    # Obtener la pendiente
+    return coef(modelo)[2]
 end
-hurst_fft(brownian)
+
+"""
+FFT_log_adj_plot(serie)
+
+serie : serie de tiempo (vector)
+
+Grafica el logaritmo del espectrograma de la serie y la recta ajustada.
+"""
+function FFT_log_adj_plot(serie)
+    # Calcula la FFT
+    Y = fft(serie)
+
+    # Visualizar los coeficientes en el espacio de frecuencias
+    n = length(serie)
+    frequencies = fftfreq(n,100)
+    magnitudes = abs.(Y)
+    #plot(frequencies, magnitudes, xlabel="Frecuencia", ylabel="Magnitud", legend=false)
+
+    # Nos quedamos con las correspondientes a frecuencias positivas
+    freqs = frequencies[2:floor(Int,length(frequencies)/2)]
+    mags = magnitudes[2:floor(Int,length(frequencies)/2)]
+
+    # Y ajustamos la recta
+        
+    # Que ahora sí se ve cómo una línea, solo resta ajustarle una recta 
+    data = DataFrame(log_scales = log.(freqs), log_mags = log.(mags))
+
+    modelo = lm(@formula(log_mags ~ log_scales), data )
+
+    # para graficar
+    data.model = predict(modelo, data)
+
+    p = plot(xlabel="x", ylabel="y", legend=:bottomright)
+    plot!(p, data.log_scales, data.log_mags, label="data")
+    plot!(p, data.log_scales, data.model, label="model", linewidth=3)
+    return p
+end
+
+plot(series[1].retornos[250:end])
+
+histogram((series[1].retornos[250:end]))
+
+histogram(diff(brownian))

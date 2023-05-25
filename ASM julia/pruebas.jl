@@ -123,22 +123,6 @@ skewness(serie.retornos[2:end])
 kurtosis(serie.retornos[2:end])
 
 
-# como lo de kolmogorov se ve muy incómodo no lo quiero hacer, pasemos a la entropía de Shannon
-# Que es algo que perfectamente puedo hacer yo solito. 
-
-# La idea es que tengo que discretizar el espacio en dónde están mis estimaciones del precio y 
-# luego ya directamente calcular la entropía con la fórmula, pienso hacerlo sobre las decenas. 
-# redondear las predicciones hasta las decenas y luego calcular la entropía de Shannon
-
-using ComplexityMeasures
-
-adf.getAgentPrediction
-
-entropy_wavelet(adf.getAgentPrediction)
-
-filter(:step => x -> x == 100, adf)
-
-
 # Aquí la función para calcular la entropía sobre las predicciones
 
 using Distributions
@@ -168,251 +152,6 @@ end
 
 
 
-
-
-
-
-
-# Lo siguiente es sobre Hurst y Wavelet 
-
-
-##### Aquí es dónde pruebo continuous wavelets 
-
-using ContinuousWavelets, Plots, Wavelets
-
-n = 2047;
-t = range(0, n / 1000, length=n) # 1kHz sampling rate
-f = testfunction(n, "Doppler")
-length(t)
-p1 = plot(t, f, legend=false, title="Doppler", xticks=false)
-
-c = wavelet(Morlet(π), β=2)
-
-res = ContinuousWavelets.cwt(f, c)
-size(res)
-length(t)
-length(freqs)
-
-freqs = getMeanFreq(ContinuousWavelets.computeWavelets(length(f), c)[1])
-
-p2 = heatmap(t, freqs, log.(abs.(res).^2)', xlabel= "time (s)", ylabel="frequency (Hz)", colorbar=false, c=cgrad(:viridis, scale=:log10))
-l = @layout [a{.3h};b{.7h}]
-plot(p1,p2,layout=l)
-
-Wavelets.maxtransformlevels(zeros(2048))
-
-f
-# Y ahora haré exactamente lo mismo pero para mi serie 
-
-# mis datos 
-f = series[1].getPrice
-t = range(0, length(f) / 1000, length=length(f))
-n = length(t)
-p1 = plot(t, f, legend=false, title="Market series", xticks=false)
-
-c = wavelet(Morlet(π), β=2)
-
-res = ContinuousWavelets.cwt(f, c)
-size(res)
-length(t)
-length(freqs)
-
-freqs = getMeanFreq(ContinuousWavelets.computeWavelets(length(f), c)[1])
-
-p2 = heatmap(t, freqs, log.(abs.(res).^2)', xlabel= "time (s)", ylabel="frequency (Hz)", colorbar=false, c=cgrad(:viridis, scale=:log10))
-l = @layout [a{.3h};b{.7h}]
-plot(p1,p2,layout=l)
-
-
-
-
-
-using Wavelets
-using Plots
-
-# Generamos una señal de ejemplo
-x = randn(1024)
-
-# Calculamos la transformada wavelet usando el filtro Daubechies 4
-cfs = dwt(x, wavelet(WT.db2))
-
-# Obtenemos los coeficientes y las escalas a graficar
-d, l = wplotdots(cfs)
-
-# Graficamos los coeficientes vs las escalas
-scatter(d, l, xlabel="Escala", ylabel="Coeficiente", markersize=2)
-
-d
-l
-
-
-cfs
-
-a
-b
-
-
-
-
-using Wavelets
-
-t = 0:0.01:10
-y = sin.(2π*t) + 0.2*randn(length(t))
-
-scales = 1:0.1:100
-coef, freqs, dt, dj, sj = cwt(y, scales, "morlet")
-
-
-
-
-
-# Esta es una comparación con FFT
-
-using FFTW
-
-# Generamos una señal de ejemplo
-N = 1024 # Longitud de la señal
-T = 1.0 # Duración de la señal
-t = range(0, T, length=N)
-f1 = 10 # Frecuencia de la señal
-f2 = 20 # Frecuencia de la señal
-s = sin.(2π*f1*t) + 0.5sin.(2π*f2*t)
-
-# Calculamos la transformada rápida de Fourier de la señal
-s_fft = fft(s)
-
-# Calculamos las escalas de frecuencia correspondientes
-fs = 1 / T # Frecuencia de muestreo
-freqs = fftfreq(N, fs)
-
-# Obtenemos los coeficientes y las escalas de la señal
-coefs = abs.(s_fft)
-scales = 1 ./ freqs
-
-plot(coefs)
-
-# Graficamos los coeficientes en función de las escalas
-using Plots
-scatter(scales, coefs, xscale=:log10, yscale=:log10, xlabel="Scale (Hz)", ylabel="Coefficient")
-
-
-
-# Number of points 
-N = 2^14 - 1 
-# Sample period
-Ts = 1 / (1.1 * N) 
-# Start time 
-t0 = 0 
-tmax = t0 + N * Ts
-# time coordinate
-t = t0:Ts:tmax
-
-# signal 
-signal = sin.(2π * 60 .* t) # sin (2π f t) 
-
-# Fourier Transform of it 
-F = fft(signal) |> fftshift
-freqs = fftfreq(length(t), 1.0/Ts) |> fftshift
-
-# plots 
-time_domain = plot(t, signal, title = "Signal")
-freq_domain = plot(freqs, abs.(F), title = "Spectrum", xlim=(-1000, +1000)) 
-plot(time_domain, freq_domain, layout = 2)
-
-
-# Ahora si quiero hacer lo mismo pero para mis datos haré lo siguiente
-series
-serie = series[1].getPrice
-
-# Número de puntos
-N = length(serie) - 1
-
-# Periodo de muestreo 
-Ts = 1/(N)
-
-# Tiempo de inicio, final y rango de tiempo
-t0 = 0 
-tmax = t0 + Ts*N
-t = t0:Ts:tmax
-
-# señal 
-signal = serie
-
-# Trasformada de Fourier de la señal 
-F = fft(signal)
-freqs = fftfreq(length(t), 1.0/Ts)
-
-# Graficamos 
-time_domain = plot(t,signal, title = "Serie de tiempo")
-freq_domain = plot(freqs, abs.(F), title = "Spectro",ylim = (0,20000) )
-
-
-using StatsBase, GLM
-
-# Obtener los logaritmos de los coeficientes de wavelet
-log_coefs = log.(abs.(res))
-
-# Calcular las escalas correspondientes a cada fila
-escalas = exp10.(collect(1:size(log_coefs, 2)))
-escalas = freqs
-
-# Realizar un análisis de regresión lineal para obtener la pendiente y el intercepto
-modelo = lm(log_coefs[:, end] .~ escalas .+ 1)
-
-# Obtener la pendiente, que corresponde al exponente de Hurst
-hurst_exponente = coef(modelo)[2]
-
-
-# Según chatGPT está bien pendejo.
-
-"""
-hurst_exponent()
-"""
-function hurst_exponendt(serie)
-    n = length(serie)
-    media = mean(serie)
-    serie_m = serie .- media
-
-    serie_cum = cumsum(serie_m)
-end
-
-
-# aqui otro ejemplo de Hurst 
-
-ave_rescaled_ranges, scales = calcAveRescaledRanges([0.04,0.02,0.05,0.08,0.02,-0.17,0.05,0]; init_k = 1)
-
-
-
-
-
-###### Aquí calculo el coeficiente de Hurst
-
-serie
-
-ave_rescaled_ranges, scales = calcAveRescaledRanges(serie.getPrice;base = 2)
-using Plots
-plot(scales, ave_rescaled_ranges)
-# ahora me hace falta calcula el logaritmo de ave_rescaled_ranges
-log_coefs = log2.(ave_rescaled_ranges)
-plot(scales, log_coefs)
-# Que ahora sí se ve cómo una línea, solo resta ajustarle una recta 
-data = DataFrame(scales = scales, log_coefs = log_coefs)
-
-modelo = lm(@formula(log_coefs ~ scales), data )
-
-# Obtener la pendiente, que corresponde al exponente de Hurst
-hurst_exponente = coef(modelo)[2]
-
-
-ave_rescaled_ranges[13]
-
-log2(6845)
-
-using CSV
-serie
-CSV.write("serie.csv",serie)
-
-
 # El siguiente paso es simular un movimiento browniano y ver qué coeficiente de Hurst le asigna. 
 
 brownian = [0.0]
@@ -422,6 +161,7 @@ for i in 2:10000
 end
 brownian 
 plot(1:10000,brownian)
+hurstExponentRSMethod(brownian)
 
 randomWalk = [0]
 for i in 2:10000
@@ -432,23 +172,32 @@ for i in 2:10000
     append!(randomWalk,randomWalk[i-1]+step)
 end
 plot(1:10000,randomWalk)
+hurstExponentRSMethod(randomWalk)
 
-base = 2
-ave_rescaled_ranges, scales = calcAveRescaledRanges(brownian; base = base)
-
-# Y ahora calculamos el exponente de Hurst 
-
-plot(scales, ave_rescaled_ranges)
-# ahora me hace falta calcula el logaritmo de ave_rescaled_ranges
-log_coefs = log.(base, ave_rescaled_ranges)
-plot(scales, log_coefs)
-# Que ahora sí se ve cómo una línea, solo resta ajustarle una recta 
-data = DataFrame(scales = scales, log_coefs = log_coefs)
-using GLM
-modelo = lm(@formula(log_coefs ~ scales), data )
-hurst_exponente = coef(modelo)[2]
 
 ######     Ayuda para mis cálculos a mano 
+
+"""
+hurstExponentRSMethod(serie)
+
+serie : serie de tiempo como vector de reale 
+
+calcula el exponente de Hurst usando el método de R/S. 
+
+Quita la tendencia a los datos y usa segmentos con longitudes iguales a todas las posibles potencias 
+de dos. Finalmente ajusta una recta al logaritmo del promedio de los Rescaled Ranges calculados.
+
+"""
+function hurstExponentRSMethod(serie)
+
+    ave_rescaled_ranges, scales = calcAveRescaledRanges(serie)
+    log_coefs = log.(ave_rescaled_ranges)
+    data = DataFrame(scales = scales, log_coefs = log_coefs)
+    modelo = lm(@formula(log_coefs ~ scales), data )
+
+    return coef(modelo)[2]
+    
+end
 
 
 """
@@ -461,6 +210,9 @@ de longitudes iguales a potencias de 2 que caben en el vector y calcula el
 promedio por potencia de 2  
 """
 function calcAveRescaledRanges(serie; init_k = 2, base = 2)
+
+    # Primero seguimos la observación del prof Hansen y le quitamos la tendencia a los datos 
+    serie = detrendData(serie)
 
     # Ahora, para cada k potencia de 2 que quepan en n 
     # para todas las las subseries de longitud k 
@@ -529,3 +281,73 @@ function calcRescaledRange(serie; complete = false)
     end
 end
     
+"""
+detrendData(serie)
+
+serie : serie de tiempo cómo vector de reales 
+
+Quita la tendencia a los datos para evitar que el exponente de Hurst sea siempre igual a 1
+
+Fórmula de Hansen
+"""
+function detrendData(serie)
+    T = length(serie)
+    new = zeros(T)
+
+    first = serie[1]
+    last = serie[end]
+
+    for i in eachindex(serie)
+        new[i] = serie[i] - (last - first)*i/T 
+    end
+    return new    
+end
+
+
+######################### Aplicar las pruebas al precio 
+
+# Tengo un dataframe 
+series[1]
+
+
+# De este saco el precio y le aplico los estadísticos como MA. 
+# debo seleccionar un tamaño de ventana
+windowSize = 1000
+
+#Y crear una función que coma funciones, el tamaño de ventana y vaya aplicando las 
+# funciones a la serie respetando el tamaño de ventana 
+
+i = 1 
+j = windowSize
+
+n = length(series[1].getPrice)
+
+funciones = [mean, var, skewness, kurtosis, hurstExponentRSMethod, FFT_log_adj_coef]
+
+vect
+
+funciones[1](vect)
+
+while j <= n 
+    # Aplica las funciones, 
+
+    prealoco un vector, 
+    lo lleno con los MA de una sola función 
+    agrego el vector cómo columna al dataframe
+
+    paso al siguiente
+
+
+    # el problema es, cómo guardo los valores calculados? la respuesta es, agregando 
+    # antes las columnas correspondientes al dataframe
+
+end
+
+df = series[1]
+
+df.priceMean .= 0
+df[!, "ejem"] .= 0 
+
+series[1]
+
+String(Symbol(funciones[2]))
