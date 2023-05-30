@@ -3,10 +3,11 @@ using Plots
 
 
 ## Con mis datos
-serie = series[2]
-serie = serie.getPrice
+serie = series[1]
+serie = serie.price
 plot(serie)
 FFT_log_adj_plot(serie)
+FFT_log_adj_coef(serie)
 
 FFT_log_adj_plot(brownian)
 FFT_log_adj_coef(brownian)
@@ -36,7 +37,7 @@ serie: serie de tiempo a la que se calculará el exponente
 No calcula todavía cómo tal el exponente, calcula la pendiente de la recta ajustada 
 al logaritmo del espectrograma del a transformada de Fourier de la serie.
 """
-function FFT_log_adj_coef(serie)
+function FFTLogAdjCoef(serie)
     # Cómo se ve la serie
     #plot(serie)
 
@@ -74,7 +75,7 @@ serie : serie de tiempo (vector)
 
 Grafica el logaritmo del espectrograma de la serie y la recta ajustada.
 """
-function FFT_log_adj_plot(serie)
+function FFTLogAdjPlot(serie)
     # Calcula la FFT
     Y = fft(serie)
 

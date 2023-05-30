@@ -3,18 +3,68 @@ pruebas.jl
 
 # Aquí están las diferentes pruebas que le aplicaré  mi modelo. 
 
-# el primer paso es transformar el enorme dataframe que recibo en un vector de dataframes de precios 
-# que me permita procesar cada una de las series de tiempo de manera individual.
-# come el dataframe come el dataframe y para cada valor diferente de ensamble crea un dataframe 
-# con precisamente esos datos y los ordena por el tiempo de ejecución. 
-
-# usando datos de ejemplo resultado del ensemble run de ejemplo en run.jl
-last(adf,10)
-last(mdf,10)
 
 using Distributions
 using StatsBase
 using GLM
+
+
+# Ejemplo de ejecución
+
+
+
+# Así se usan las funciones con el resultado del ensemble run 
+series = desEnsableDf(mdf)
+calcReturns!(series)
+
+series
+
+
+# Así se realizan las pruebas al resultado de una ejecución
+columnas = ["price", "retornos"]
+funciones = [mean, var, skewness, kurtosis, hurstExponentRSMethod, FFTLogAdjCoef, 
+    calcSeriesShannonEntropy]
+
+calcStats!(series[1], columnas, funciones, 200)
+
+calculatePredictionsShannonEntropy!(mdf, adf)
+
+series[1]
+
+plot(series[1].priceCalcSeriesShannonEntropy)
+plot(series[1].priceSkewness)
+
+
+
+# Y lo único que hace falta es calcular la entropía de Shannon sobre las predicciones 
+# de los agentes y agregarlo al DataFrame
+
+
+# Primero hay que cargar todas las funciones
+
+
+# Simulación de un movimiento browniano y de una caminata aleatoria
+brownian = [0.0]
+for i in 2:10000
+    ϵ = rand(Normal(0,1))
+    append!(brownian, brownian[i-1] + ϵ)
+end
+brownian 
+plot(1:10000,brownian)
+hurstExponentRSMethod(brownian)
+
+randomWalk = [0]
+for i in 2:10000
+    step = rand(Bernoulli(0.5))
+    if step == 0
+        step = -1
+    end
+    append!(randomWalk,randomWalk[i-1]+step)
+end
+plot(1:10000,randomWalk)
+hurstExponentRSMethod(randomWalk)
+
+
 
 # Me hará falta una función que una los diferentes dataframes de las diferentes ejecuciones, el 
 # tiempo se pierde en cada una de las ejecuciones. Crearé primero una corrida de ejemplo para
@@ -75,11 +125,11 @@ Calcula los retornos en los precios de la serie de tiempo y agrega la columna al
 function calcReturns!(df::DataFrame)
     retornos = Float64[]
 
-    for i in eachindex(df.getPrice)
+    for i in eachindex(df.price)
         if i == 1
             append!(retornos,1/0)
         else
-            retorno = (df.getPrice[i] - df.getPrice[i-1])/df.getPrice[i-1]
+            retorno = (df.price[i] - df.price[i-1])/df.price[i-1]
             append!(retornos,retorno)
         end
     end
@@ -103,12 +153,6 @@ function calcReturns!(series::Array{Any})
 end
 
 
-# Así se usan las funciones con el resultado del ensemble run 
-
-series = desEnsableDf(mdf)
-calcReturns!(series)
-
-series
 
 # ahora debo programar las 6 funciones de estadísticos.
 
@@ -128,6 +172,42 @@ kurtosis(serie.retornos[2:end])
 using Distributions
 using StatsBase
 
+# Función que filtra las predicciones de los agentes para un tiempo particular
+# y las deja en forma de vector listas para ser comidas por 
+# calculatePredictionsShannonEntropy
+
+### Función que come el mdf, el adf y agrega la nueva columna al mdf 
+
+
+function calculatePredictionsShannonEntropy!(mdf::DataFrame, adf::DataFrame)
+    temp = zeros(size(mdf)[1])
+
+    for i in eachindex(temp)
+        preds = filterPredictionsForShannon(adf, i)
+        entropy = calculatePredictionsShannonEntropy(preds)
+        temp[i] = entropy
+    end
+
+    mdf[!, "predictionsShannonEntropy"] = temp
+
+end
+
+"""
+filterPredictionsForShannon(adf, i)
+
+adf : DataFrame con la información de los agentes
+i : tiempo deseado 
+
+Una vez que todas las ejecuciones han sido juntadas en un solo vector 
+se puede usar esta función para agregar la entropía de Shannon sobre 
+las predicciones al DataFrame mdf
+"""
+function filterPredictionsForShannon(adf, i)
+
+    return filter(:step => ==(i), adf).getAgentPrice
+    
+end
+
 """
 calculatePredictionsShannonEntropy(predictions)
 
@@ -138,41 +218,20 @@ calculatePredictionsShannonEntropy(predictions)
     y luego calcula la entropía de Shannon para la distribución 
 
 """
-function calculatePredictionsShannonEntropy(vect)
-    println("entrada: ",vect)
+function calculatePredictionsShannonEntropy(vect::Array{Float64})
+    #println("entrada: ",vect)
 
     vect = floor.(vect ./ 10)
-    println("redondeo: ",vect)
+    #println("redondeo: ",vect)
 
     p = fit_mle(Categorical, vect)
-    println(p) # ajusta un distribución de proba
+    #println(p) # ajusta un distribución de proba
 
     return Distributions.entropy(p) # calcula la entropía de Shannon
 end
 
 
 
-# El siguiente paso es simular un movimiento browniano y ver qué coeficiente de Hurst le asigna. 
-
-brownian = [0.0]
-for i in 2:10000
-    ϵ = rand(Normal(0,1))
-    append!(brownian, brownian[i-1] + ϵ)
-end
-brownian 
-plot(1:10000,brownian)
-hurstExponentRSMethod(brownian)
-
-randomWalk = [0]
-for i in 2:10000
-    step = rand(Bernoulli(0.5))
-    if step == 0
-        step = -1
-    end
-    append!(randomWalk,randomWalk[i-1]+step)
-end
-plot(1:10000,randomWalk)
-hurstExponentRSMethod(randomWalk)
 
 
 ######     Ayuda para mis cálculos a mano 
@@ -304,50 +363,87 @@ function detrendData(serie)
 end
 
 
-######################### Aplicar las pruebas al precio 
-
-# Tengo un dataframe 
-series[1]
+######################### Aplicar las pruebas al precio  y retornos
 
 
-# De este saco el precio y le aplico los estadísticos como MA. 
-# debo seleccionar un tamaño de ventana
-windowSize = 1000
 
-#Y crear una función que coma funciones, el tamaño de ventana y vaya aplicando las 
-# funciones a la serie respetando el tamaño de ventana 
+function calcStats!(df, columnas, funciones, windowSize)
 
-i = 1 
-j = windowSize
+    for columna in columnas
+        for funcion in funciones
+            newCol = calcStat(df, columna, funcion, windowSize)
+            # agregamos la nueva columna al dataframe 
+            colName = columna * uppercasefirst(String(Symbol(funcion)))
 
-n = length(series[1].getPrice)
-
-funciones = [mean, var, skewness, kurtosis, hurstExponentRSMethod, FFT_log_adj_coef]
-
-vect
-
-funciones[1](vect)
-
-while j <= n 
-    # Aplica las funciones, 
-
-    prealoco un vector, 
-    lo lleno con los MA de una sola función 
-    agrego el vector cómo columna al dataframe
-
-    paso al siguiente
-
-
-    # el problema es, cómo guardo los valores calculados? la respuesta es, agregando 
-    # antes las columnas correspondientes al dataframe
-
+            df[!, colName] = newCol
+        end
+    end  
 end
 
-df = series[1]
+function calcStat(df, columna, funcion, windowSize)
+    # Prealoco un vector
+    temp = zeros(size(df)[1])
 
-df.priceMean .= 0
-df[!, "ejem"] .= 0 
+    #lo lleno con los MA de una sola función
+    if windowSize > size(df)[1] 
+        error("Toma un tamaño de ventana menor a la longitud de la serie")
+    end
 
-series[1]
+    for i in 1:(size(df)[1] - windowSize)
+        window = i:(i+windowSize)
+        muestra = df[!,columna][window]
+        temp[i+windowSize] = funcion(muestra)
+    end
+     
+    # regreso el vector calculado 
+    return temp
+end
 
-String(Symbol(funciones[2]))
+
+"""
+calcSeriesShannonEntropy(vect)
+
+vect : serie de tiempo como vector de flotantes
+
+
+Come una serie de tiempo y calcula la entropía de Shannon usando el 
+método SAX, de discretizar en un alfabeto
+
+"""
+function calcSeriesShannonEntropy(vect)
+
+    max = maximum(vect)
+    min = minimum(vect)
+
+    midPoint = (max - min)/2
+    lowPoint = midPoint - (max - min) / 4
+    highPoint = midPoint + (max - min) / 4
+
+    new = zeros(length(vect))
+
+    for i in eachindex(vect)
+        new[i] = toAlphabet(vect[i], lowPoint, midPoint, highPoint)
+    end 
+
+    new = Int.(round.(new))
+
+    # Y ahora calculamos la entropia sobre la serie traducida al alfabeto 
+    p = fit_mle(Categorical, vect)
+    #println(p) # ajusta un distribución de proba
+    return Distributions.entropy(p)
+    
+end
+
+function toAlphabet(x, lowPoint, midPoint, highPoint)
+
+    if x < lowPoint
+        return 0
+    elseif x < midPoint
+        return 1 
+    elseif x < highPoint
+        return 2 
+    else
+        return 3
+    end
+
+end

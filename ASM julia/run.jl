@@ -126,7 +126,7 @@ properties[:n_agents] = 100
 # Se definen las función de recolección de datos
 price(model) = model.properties.des.precios[end]
 dividend(model) = model.properties.des.dividendo[end]
-mdata = [getPrice, getDividend]
+mdata = [price, dividend]
 
 getAgentPrice(agent) = agent.des.precios[end]
 getAgentPrediction(agent) = agent.prediction
@@ -141,7 +141,7 @@ for i in 1:2
 end
 models
 
-adf, mdf = ensemblerun!(models,agent_step!, model_step!, 10000; mdata, adata)
+adf, mdf = ensemblerun!(models,agent_step!, model_step!, 50000; mdata, adata)
 
 
 last(adf,10)
