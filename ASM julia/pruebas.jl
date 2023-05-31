@@ -14,10 +14,14 @@ using GLM
 
 
 # Así se usan las funciones con el resultado del ensemble run 
-series = desEnsableDf(mdf)
-calcReturns!(series)
+mdfs = desEnsableDf(mdf)
+calcReturns!(mdfs)
 
-series
+adfs = desEnsableDf(adf)
+
+
+
+mdfs
 
 
 # Así se realizan las pruebas al resultado de una ejecución
@@ -25,14 +29,28 @@ columnas = ["price", "retornos"]
 funciones = [mean, var, skewness, kurtosis, hurstExponentRSMethod, FFTLogAdjCoef, 
     calcSeriesShannonEntropy]
 
-calcStats!(series[1], columnas, funciones, 200)
+calcStats!(mdfs[1], columnas, funciones, 200)
 
-calculatePredictionsShannonEntropy!(mdf, adf)
+# Falta agregar la columna calculada al DataFrame 
+calculatePredictionsShannonEntropy!(mdfs[1], adfs[1])
 
-series[1]
 
-plot(series[1].priceCalcSeriesShannonEntropy)
-plot(series[1].priceSkewness)
+mdfs[1]
+
+plot(mdfs[1].retornosCalcSeriesShannonEntropy[300:end])
+plot(mdfs[1].priceSkewness)
+plot(mdfs[1].price)
+plot!(mdfs[2].price)
+plot!(mdfs[3].price)
+plot!(mdfs[4].price)
+plot!(mdfs[5].price)
+plot!(mdfs[6].price)
+
+plot(mdfs[6].retornos[50:end])
+
+
+
+
 
 
 
@@ -183,7 +201,7 @@ function calculatePredictionsShannonEntropy!(mdf::DataFrame, adf::DataFrame)
     temp = zeros(size(mdf)[1])
 
     for i in eachindex(temp)
-        preds = filterPredictionsForShannon(adf, i)
+        preds = filterPredictionsForShannon(adf, i-1) # tenemos step == 0
         entropy = calculatePredictionsShannonEntropy(preds)
         temp[i] = entropy
     end

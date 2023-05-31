@@ -141,7 +141,7 @@ for i in 1:2
 end
 models
 
-adf, mdf = ensemblerun!(models,agent_step!, model_step!, 50000; mdata, adata)
+adf, mdf = ensemblerun!(models,agent_step!, model_step!, 2000; mdata, adata)
 
 
 last(adf,10)
