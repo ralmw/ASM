@@ -130,7 +130,10 @@ mdata = [price, dividend]
 
 getAgentPrice(agent) = agent.des.precios[end]
 getAgentPrediction(agent) = agent.prediction
-adata = [getAgentPrice, getAgentPrediction]
+nextGAExecution(agent) = agent.GA_time
+aveRuleFitness(agent) = mean([agent.reglas[i].fitness.real for i in eachindex(agent.reglas)])
+agentClustersInfo(agent) = agent.ct
+adata = [getAgentPrice, getAgentPrediction, nextGAExecution, aveRuleFitness, agentClustersInfo]
 
 
 # inicialización
@@ -141,7 +144,7 @@ for i in 1:2
 end
 models
 
-adf, mdf = ensemblerun!(models,agent_step!, model_step!, 2000; mdata, adata)
+adf, mdf = ensemblerun!(models,agent_step!, model_step!, 450; mdata, adata)
 
 
 last(adf,10)
@@ -248,10 +251,11 @@ mdf.avePred[5000]
 
 mdf.getInfo[5000]
 
-
+######### Porque las reglas de mis agentes tienen fitness promedio Inf ??????   RESUELTO
 
 # pruebas para observar ambas componentes del fitness
 # quiero recolectar la información de aboslutamente todos los agentes
+model = models[1]
 
 aggs = collect(allagents(model))
 
@@ -265,11 +269,7 @@ model.properties.des.des
 
 predict(aggs[1].reglas, model.properties.des.des )
 
-predic
 
-minimum
-
-[aggs[1].reglas[i].predictor[1] for i in 1:100]
 
 vars = [ag.reglas[i].fitness.V for ag in aggs for i in 1:100]
 boxplot(vars, outliers = false, label="Varianzas", title="Boxplot de las varianzas sin outliers")
@@ -278,8 +278,23 @@ boxplot(vars, outliers = false, label="Varianzas", title="Boxplot de las varianz
 ff = [(ag.reglas[i].fitness.pred,ag.reglas[i].fitness.act) for ag in aggs for i in 1:100]
 scatter(ff,title="Ambos componentes del fitness", label="Data",xlabel="pred",ylabel="act")
 
-vars = [ag.reglas[i].fitness.V for ag in aggs for i in 1:100]
-pred = [ag.reglas[i].fitness.pred for ag in aggs for i in 1:100]
+## Recolección manual del promedio 
+fits = [(ag.reglas[i].fitness.real) for ag in aggs for i in 1:100]
+sum(fits .== Inf)
+
+
+fitActs = [ag.reglas[i].fitness.act for ag in aggs for i in 1:100]
+fitPreds = [ag.reglas[i].fitness.pred for ag in aggs for i in 1:100]
+fitVars = [ag.reglas[i].fitness.V for ag in aggs for i in 1:100]
+
+sum(fitActs .== Inf)
+sum(fitPreds .== Inf )
+sum(fitVars .== Inf)
+
+sum(fitVars .== 1 )
+
+# El problema está al tranformar la varianza 
+
 
 mean(vars)
 minimum(vars)

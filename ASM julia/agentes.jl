@@ -18,6 +18,9 @@ end # mutable struct
 
     la propiedad des hace referencia al descriptor propio 
     del agente, cada agente tendrá su propio registro de los precios 
+
+    el objeto ct tiene la siguiente estructura, para la regla con 
+    índice i, ct[i] nos dice a qué cluster está asociado (z.B. ct[1] = 2)
 """
 mutable struct Trader <: AbstractAgent
     id::Int
@@ -29,6 +32,7 @@ mutable struct Trader <: AbstractAgent
     des
     neighborhood::Dict # Se almacena si el vínculo con el vecino es beneficioso 
     prediction::Float64
+    ct # cutree object que describe los clusters de las reglas
 end # mutable struct
 
 function initialize_model(properties;
@@ -53,7 +57,7 @@ function initialize_model(properties;
         reglas = createRules(properties)
         time = floor(Int,rand(Exponential(properties[:gaActivationFrec])))
         agent = Trader(id, (0,0), Wealth(10000.0, properties[:initStock]), reglas, properties, time,
-            initializeDescriptor(properties), Dict(0 => 0.0), 0.0 )
+            initializeDescriptor(properties), Dict(0 => 0.0), 0.0, zeros(length(reglas)) )
         add_agent!(agent, model)
     end
 
@@ -196,7 +200,7 @@ function agent_step!(agent, model)
 
     # si es el momento, ejecuta el algoritmo genético
     if agent.GA_time <= 0
-        agent.reglas = GA(agent.reglas)
+        agent.reglas, agent.ct = GA(agent.reglas, true)
         agent.GA_time = 1 + floor(Int,rand(Exponential(agent.properties[:gaActivationFrec])))
     end
     return

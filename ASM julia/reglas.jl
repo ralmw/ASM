@@ -386,7 +386,7 @@ function createRule(properties)
     a = rand( Uniform( log(0.5), log(2) ) ) # en [ln 0.5, ln 2]
     b = rand( Uniform( -10.0, 10.0 ) )
     predictor = [a,b]
-    fitness = Fitness( rand(), 1, 1, 1 ,1) #fitness aleatorio
+    fitness = Fitness( rand(), 2, 2, 2 ,2) #fitness aleatorio
     variance =  1
     cluster = 1
     return Rule(conditional, realConditional, predictor,
@@ -401,6 +401,28 @@ lista inicial de reglas.
 """
 function createRules(properties)
     return [ createRule(properties) for _ in 1:properties[:nReglas] ]
+end # function
+
+"""
+GA(reglas, ct)
+
+La misma función que abajo solo que regresa el vector ct que describe los clusters 
+de reglas
+"""
+function GA(reglas, ct_return)
+
+    reglas, clusters, ct = clusterize(reglas)
+    reglas, clusters, ct = podaPorCluster(reglas, clusters, ct)
+    reglas, clusters, ct = podaSigma(reglas, clusters, ct)
+    hijos = calculateProgeny(reglas, clusters)
+
+    append!(reglas, hijos)
+
+    if ct_return == false
+        return reglas
+    else 
+        return reglas, ct 
+    end
 end # function
 
 """
@@ -453,7 +475,7 @@ function clusterize(reglas)
     ct = cutree(hc, k = properties[:kClusters] )
 
     # Ahora asignar las reglas a sus correspondientes cluster
-    for i in 1:length(reglas)
+    for i in eachindex(reglas)
         reglas[i].cluster = ct[i]
     end
 
