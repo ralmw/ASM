@@ -500,7 +500,8 @@ function Ehrentreich_2(precios, dividendo, d, I)
     return precios[end] * I / dividendo[end]
 end # function
 function Ehrentreich_3(precios, dividendo)
-    return precios[end]/mean(precios)
+    # Modificada para considerar solo el promedio de los últimos 500 tiempos 
+    return precios[end]/mean(precios[end-500+1:end])
 end # function
 
 function Ehrentreich_4(precios, dividendo)

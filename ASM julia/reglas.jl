@@ -192,7 +192,7 @@ Esta función también actualiza el último tiempo de activación de las reglas.
 function predict(reglas, des)
     activas = []
     properties = reglas[1].properties
-    for i in 1:length(reglas)
+    for i in eachindex(reglas)
         # compareRule actualiza la información de la última activación
         active = compareRule(reglas[i], des, properties)
         if active
@@ -339,6 +339,7 @@ q = DiscreteNonParametric( [0,1,2], v )
 rand(q, 100)
 
 mutable struct Rule
+    id
     conditional
     realConditional
     predictor
@@ -370,7 +371,7 @@ end # struct
 Esta función será el constructor de mis reglas. Aqui se inicializarán las
 reglas usando los parametros properties otorgados al constructor
 """
-function createRule(properties)
+function createRule(properties, id)
     conditional = rand(q, properties[:nBits])# vector con los bits iniciales generados estocásticamente
     # es aquí también donde debo ajustar para que sean UInt8
 
@@ -389,7 +390,7 @@ function createRule(properties)
     fitness = Fitness( rand(), 2, 2, 2 ,2) #fitness aleatorio
     variance =  1
     cluster = 1
-    return Rule(conditional, realConditional, predictor,
+    return Rule(id, conditional, realConditional, predictor,
         fitness, variance, properties, cluster, 2*properties[:gaActivationFrec] )
 end # function
 
@@ -400,7 +401,7 @@ Esta es la función usada durante la creación del agente para crear su
 lista inicial de reglas.
 """
 function createRules(properties)
-    return [ createRule(properties) for _ in 1:properties[:nReglas] ]
+    return [ createRule(properties, id ) for id in 1:properties[:nReglas] ]
 end # function
 
 """
@@ -409,12 +410,12 @@ GA(reglas, ct)
 La misma función que abajo solo que regresa el vector ct que describe los clusters 
 de reglas
 """
-function GA(reglas, ct_return)
+function GA(reglas, ct_return, agent_last_rule_id)
 
     reglas, clusters, ct = clusterize(reglas)
     reglas, clusters, ct = podaPorCluster(reglas, clusters, ct)
     reglas, clusters, ct = podaSigma(reglas, clusters, ct)
-    hijos = calculateProgeny(reglas, clusters)
+    hijos = calculateProgeny(reglas, clusters, agent_last_rule_id)
 
     append!(reglas, hijos)
 
@@ -430,12 +431,12 @@ end # function
 
 Función que llama el agente para ejecutar el algoritmo genético
 """
-function GA(reglas)
+function GA(reglas, agent_last_rule_id)
 
     reglas, clusters, ct = clusterize(reglas)
     reglas, clusters, ct = podaPorCluster(reglas, clusters, ct)
     reglas, clusters, ct = podaSigma(reglas, clusters, ct)
-    hijos = calculateProgeny(reglas, clusters)
+    hijos = calculateProgeny(reglas, clusters, agent_last_rule_id)
 
     append!(reglas, hijos)
 
@@ -732,22 +733,24 @@ end # function
 
 Esta función calcula los hijos y los regresa en una lista
 """
-function calculateProgeny(reglas, clusters)
+function calculateProgeny(reglas, clusters, agent_last_rule_id)
     properties = reglas[1].properties
     hijos = []
     clustersInfo = calcClustInfo(reglas, clusters)
     fitnessAve = mean([reglas[i].fitness.V for i in eachindex(reglas)])
+    next_id = agent_last_rule_id + 1
 
     while length(reglas) + length(hijos) < properties[:nReglas]
         # selecciona método de reproducción, mutación o cruza
         if rand(Bernoulli(0.2))
             # mutación
-            hijo = mutate(reglas, clustersInfo, fitnessAve) # ya deben estar calculados
+            hijo = mutate(reglas, clustersInfo, fitnessAve, next_id) # ya deben estar calculados
         else
             # cruza
-            hijo = crossover(reglas, fitnessAve)
+            hijo = crossover(reglas, fitnessAve, next_id)
         end
         push!(hijos, hijo )
+        next_id += 1
     end
     return hijos
 end # function
@@ -771,7 +774,7 @@ predecir a la alta.
 
 documentation
 """
-function mutate(reglas, clustersInfo, fitnessAve)
+function mutate(reglas, clustersInfo, fitnessAve, id)
     padre = reglas[findFather(reglas, reglas[1].properties[:tamañoTorneo])]
     conditional = padre.conditional
     realConditional = padre.realConditional
@@ -783,7 +786,7 @@ function mutate(reglas, clustersInfo, fitnessAve)
     # muta la parte predictora de la regla
     predictor = mutatePredictor(predictor)
     fit = Fitness(0, 0, fitnessAve, 0, 0 )
-    hijo = Rule(conditional, realConditional, predictor, fit, 1,
+    hijo = Rule(id, conditional, realConditional, predictor, fit, 1,
         padre.properties, padre.cluster, 2*reglas[1].properties[:gaActivationFrec] )
 
     return hijo
@@ -913,7 +916,7 @@ end
 
 Esta función es la responsable de calcular hijos usando cruza
 """
-function crossover(reglas, aveFitness)
+function crossover(reglas, aveFitness, id)
     properties = reglas[1].properties
     padre1 = reglas[findFather(reglas, properties[:tamañoTorneo])]
     padre2 = reglas[findFather(reglas, properties[:tamañoTorneo])]
@@ -926,7 +929,7 @@ function crossover(reglas, aveFitness)
     pred = crossoverSBX(padre1.predictor, padre2.predictor)
 
     fit = Fitness(0, 0, aveFitness, 0, 0)
-    hijo = Rule(cond, realCond, pred, fit, 1, padre1.properties,
+    hijo = Rule(id, cond, realCond, pred, fit, 1, padre1.properties,
         padre1.cluster,2*padre1.properties[:gaActivationFrec])
 
     return hijo

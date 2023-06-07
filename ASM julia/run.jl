@@ -132,8 +132,13 @@ getAgentPrice(agent) = agent.des.precios[end]
 getAgentPrediction(agent) = agent.prediction
 nextGAExecution(agent) = agent.GA_time
 aveRuleFitness(agent) = mean([agent.reglas[i].fitness.real for i in eachindex(agent.reglas)])
-agentClustersInfo(agent) = agent.ct
-adata = [getAgentPrice, getAgentPrediction, nextGAExecution, aveRuleFitness, agentClustersInfo]
+agentClustersInfo(agent) = agent.GA_recent ? agent.ct : []
+agentRules(agent) = agent.GA_recent ? agent.reglas : [] # 
+agentRulesFitness(agent) = [agent.reglas[i].fitness.real for i in eachindex(agent.reglas)]
+agentRulesIds(agent) = [agent.reglas[i].id for i in eachindex(agent.reglas)]
+# fib(n::Integer) = n ≤ 2 ? one(n) : fib(n-1) + fib(n-2)
+adata = [getAgentPrice, getAgentPrediction, nextGAExecution, aveRuleFitness, agentClustersInfo,
+    agentRules, agentRulesFitness]
 
 
 # inicialización
@@ -144,7 +149,7 @@ for i in 1:2
 end
 models
 
-adf, mdf = ensemblerun!(models,agent_step!, model_step!, 450; mdata, adata)
+adf, mdf = ensemblerun!(models,agent_step!, model_step!, 500; mdata, adata)
 
 
 last(adf,10)

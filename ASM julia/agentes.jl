@@ -29,6 +29,8 @@ mutable struct Trader <: AbstractAgent
     reglas
     properties::Dict
     GA_time::Int # when 0 it is time to execute the GA alg
+    GA_recent::Bool # flag to signal that the GA was just exec
+    last_rule_id::Int
     des
     neighborhood::Dict # Se almacena si el vínculo con el vecino es beneficioso 
     prediction::Float64
@@ -57,7 +59,8 @@ function initialize_model(properties;
         reglas = createRules(properties)
         time = floor(Int,rand(Exponential(properties[:gaActivationFrec])))
         agent = Trader(id, (0,0), Wealth(10000.0, properties[:initStock]), reglas, properties, time,
-            initializeDescriptor(properties), Dict(0 => 0.0), 0.0, zeros(length(reglas)) )
+            false, properties[:n_agents], initializeDescriptor(properties), Dict(0 => 0.0), 0.0, 
+            zeros(length(reglas)) )
         add_agent!(agent, model)
     end
 
@@ -189,6 +192,7 @@ en Netlogo. La labor de esta función está en actualizar las reglas del agente
 de acuerdo al último precio calculado almacenado en model.properties.price.
 """
 function agent_step!(agent, model)
+    agent.GA_recent = false
     # primero actualiza el fitness de las reglas usando la información del precio
     if model.properties.properties[:specialistType] == "global"
         updateFitness!(model.properties.des, agent.reglas) # fitness vs des global
@@ -200,8 +204,9 @@ function agent_step!(agent, model)
 
     # si es el momento, ejecuta el algoritmo genético
     if agent.GA_time <= 0
-        agent.reglas, agent.ct = GA(agent.reglas, true)
+        agent.reglas, agent.ct = GA(agent.reglas, true, agent.last_rule_id)
         agent.GA_time = 1 + floor(Int,rand(Exponential(agent.properties[:gaActivationFrec])))
+        agent.GA_recent = true
     end
     return
 end # function
