@@ -81,7 +81,7 @@ function model_step!(model)
 
     if model.properties.properties[:modelTraining] == true
         #println(trainingVector[i])
-        println(step)
+        #println(step)
         
     end
 

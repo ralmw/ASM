@@ -70,26 +70,21 @@ properties = validateProperties()
 properties[:n_agents] = 100
 properties[:modelTraining] = true
 global globalTrainingCont = 1
-global globalTrainingPriceVector = [1,1,1,1,1,1,1,1,1,1]
+x = 1:100000
+y = 100 .* sin.(2π .* x ./ 500) .+ 500
+global globalTrainingPriceVector = y # Un seno de periodo 500 y amplitud 100 con base en 500
 training_n = length(globalTrainingPriceVector)
 
 properties[:globalTrainingCont] = 1 
 properties[:globalTrainingPriceVector] = globalTrainingPriceVector
 
 # for training :
+
+
 model = initialize_model(properties)
-_ , mdf = run!(model, agent_step!, model_step!, training_n; )
+adf , mdf = run!(model, agent_step!, model_step!, training_n;  )
 
-
-agent = getindex(model, 39)
-d = agent.neighborhood
-all_neighbors(G,39)
-length(all_neighbors(G,39))
-
-G = model.properties.graph
-nodelabels = 1:nv(G)
-gplot(G, nodelabel = nodelabels)
-
+# Efectivamente tiene toda la información que deseo. Ahora vamos a dejarlo correr
 
 
 
@@ -314,3 +309,86 @@ boxplot(pred)
 
 
 f
+
+
+
+################### Cómo se ven las reglas de los agentes después de ser entrenadas por 
+# la serie sintética senoidal?
+
+# Un heatmap para comparar las partes condicionales de un par de agentes ordenadas por 
+# clusterización jerárquica
+agent = getindex(model, 10)
+agent2 = getindex(model, 20)
+
+
+heatmapConditionalComparison(agent, agent2, 10)
+
+
+
+using Clustering
+
+function heatmapConditionalComparison(agent, agent2, k)
+    # función que crea un heatmap de la similitud entre las reglas de 2 agentes
+    # Me quedo con las reglas
+    reglas = agent.reglas 
+    reglas2 = agent2.reglas
+
+    # ordeno mis reglas usando clusterización jerárquica
+    #k = 4 # numero de clusters
+    reglas = hclustOrdenReglas(reglas, k)
+    reglas2 = hclustOrdenReglas(reglas2, k)
+
+    # calculo la matriz de distancias 
+    # sum(a .!= b) # distancia de hamming
+
+    M = zeros(length(reglas), length(reglas2))
+
+    for i in eachindex(reglas)
+        a = reglas[i].conditional
+        for j in eachindex(reglas2)
+            b = reglas2[j].conditional
+            M[i,j] = sum(a .!= b)
+        end
+    end
+
+    return heatmap(M)
+end
+
+function hclustOrdenReglas(reglas, k)
+    # función que ordena las reglas usando clusterización jerárquica para el heatmap
+    
+    # Con jerárquica
+
+    # calcula la matriz de distancias de las reglas
+    M = zeros(Int8, length(reglas), length(reglas) )
+
+    for i in CartesianIndices(M)
+        a = reglas[i[1]].conditional # primera y segunda reglas
+        b = reglas[i[2]].conditional
+        M[i] = sum(a .!= b) # distancia de hamming
+    end
+    # M, la matriz de distancias obtenida
+
+    # realiza clusterización y corta
+    hc = hclust(M, linkage=:complete)
+    plot(hc) #para observar el dendrograma
+    ct = cutree(hc, k = k )
+
+    # Entonces recorro ct k veces y voy extrayendo el índice 
+    nuevoOrden = []
+    for cluster in 1:k
+        for i in eachindex(reglas)
+            if ct[i] == cluster
+                append!(nuevoOrden, i)
+            end
+        end
+    end
+
+    return reglas[nuevoOrden]
+end
+
+
+
+## la conclusión de está comparación es que efectivamente hay reglas 
+# en ambos agentes que se parecen bastante entre si pero también
+# hay otras que no se parecen tanto 

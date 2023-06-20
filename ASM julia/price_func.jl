@@ -223,7 +223,7 @@ function unzipTransactions(transactions,properties)
             trainingPrice = trainingPriceVector[trainingCont]
             PriceDict[i] = trainingPrice
             
-            println(trainingPrice," ", trainingCont)
+            #println(trainingPrice," ", trainingCont)
         end
         properties[:globalTrainingCont] += 1
     end
